@@ -49,9 +49,9 @@ function mapSourceItem(row: SourceItemRow): SourceItem {
 }
 
 export function createSourceItem(content: string, sourceType = "text"): SourceItem {
-  const trimmed = content.trim();
-
-  if (!trimmed) {
+  // Reject empty/whitespace-only input, but preserve the raw source verbatim.
+  // Source-backed recall depends on byte-exact source, so we do not trim what we store.
+  if (!content.trim()) {
     throw new Error("Capture cannot be empty.");
   }
 
@@ -59,11 +59,11 @@ export function createSourceItem(content: string, sourceType = "text"): SourceIt
   const createdAt = new Date().toISOString();
   const result = database
     .prepare("INSERT INTO source_items (content, source_type, created_at) VALUES (?, ?, ?)")
-    .run(trimmed, sourceType, createdAt);
+    .run(content, sourceType, createdAt);
 
   return {
     id: Number(result.lastInsertRowid),
-    content: trimmed,
+    content,
     sourceType,
     createdAt
   };

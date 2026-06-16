@@ -39,6 +39,8 @@ Then open:
 - Capture: `http://localhost:3000/capture`
 - Inbox: `http://localhost:3000/inbox`
 
+If port 3000 is already in use, Next.js will print the alternate local URL, such as `http://localhost:3001`.
+
 ## Production-style check
 
 ```bash

@@ -13,7 +13,7 @@ export default async function CapturePage({ searchParams }: CapturePageProps) {
   const params = await searchParams;
   const recentCaptures = listRecentSourceItems(5);
   const error = params.error === "too-long"
-    ? "Capture is too long for v0. Keep it under 10,000 characters."
+    ? "That capture is unusually large. Keep it under 100,000 characters."
     : params.error === "empty"
       ? "Write something worth remembering before saving."
       : undefined;

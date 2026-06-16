@@ -4,11 +4,7 @@ import { countSourceItems, listRecentSourceItems } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export default function InboxPage({ searchParams }: { searchParams: Promise<{ captured?: string }> }) {
-  return <InboxContent searchParams={searchParams} />;
-}
-
-async function InboxContent({ searchParams }: { searchParams: Promise<{ captured?: string }> }) {
+export default async function InboxPage({ searchParams }: { searchParams: Promise<{ captured?: string }> }) {
   const params = await searchParams;
   const items = listRecentSourceItems(30);
   const total = countSourceItems();
