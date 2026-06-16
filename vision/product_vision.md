@@ -4,6 +4,8 @@
 
 Build trusted external memory for Ty first.
 
+Chief of Staff exists because the founder wants to spend less time organizing information and more time acting on it.
+
 The user should never have to be their own librarian.
 
 One inbox. Infinite organization.
@@ -35,6 +37,8 @@ Build a system that maintains context for the user over time and helps them act 
 The product is not a better folder, tag, or dashboard. It is trusted external memory for a person whose work, relationships, ideas, opportunities, preferences, and obligations are too scattered to maintain manually.
 
 The recurring problem is cognitive load, not generic productivity.
+
+See [founder_context.md](founder_context.md) for the life problem that created the product.
 
 ## What The System Should Do
 
