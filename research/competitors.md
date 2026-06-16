@@ -4,6 +4,24 @@
 
 Chief of Staff overlaps several markets but should avoid copying any one category too closely.
 
+See [software_landscape.md](software_landscape.md) for the current named-product landscape.
+
+## Competitive Thesis
+
+Chief of Staff should not compete as a broader notes app, task manager, CRM, calendar, workspace, automation builder, or chatbot.
+
+The strongest wedge is trusted follow-through memory for high-context professionals:
+
+- Capture messy context.
+- Detect commitments.
+- Preserve relationship and project memory.
+- Surface timely briefings.
+- Suggest user-approved next actions.
+
+The product should be judged against one question:
+
+Does this help the user remember what matters and follow through?
+
 ## Personal Knowledge Management
 
 Products in this category help users store and retrieve notes, documents, links, and ideas.
@@ -89,3 +107,22 @@ Chief of Staff should win by combining:
 - Compounding value over time.
 
 The product should not compete by becoming a larger dashboard. It should compete by removing the need for the user to maintain the system manually.
+
+## Where Chief Of Staff Can Win
+
+Chief of Staff can win in the gap between memory and execution.
+
+Most adjacent products are strong at one side:
+
+- Knowledge tools store context but rarely drive follow-through.
+- Task and calendar tools drive action but often lack the original context.
+- CRMs track relationships but require hygiene and sales-first structure.
+- Meeting tools capture conversations but are too meeting-specific.
+- Generic AI assistants are flexible but weak on source-backed, user-approved operational memory.
+
+The first version should avoid broad "personal OS" positioning and instead prove:
+
+- Users will send messy context.
+- The system can extract useful commitments and memory.
+- Briefings and reminders catch things the user would otherwise miss.
+- Users trust the provenance and approval flow.
