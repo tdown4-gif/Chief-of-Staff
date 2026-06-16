@@ -9,6 +9,26 @@
 - Research proactively when appropriate.
 - Suggest actions while keeping the user in control.
 
+## Architecture Thesis
+
+Chief of Staff should not model information like a notes app:
+
+1. Note
+2. Folder
+3. Tag
+
+It should model information like a context system:
+
+1. Capture
+2. Raw input
+3. Object extraction
+4. Relationship graph
+5. Memory layer
+6. Search and chat
+7. Proactive suggestions
+
+The architecture exists to maintain context over time, not to make the user maintain structure.
+
 ## Core Components
 
 ### Web App
@@ -65,4 +85,4 @@ Privacy-first design should be part of the architecture, not a later feature. V1
 
 ## V1 Constraints
 
-Do not build a full CRM, calendar app, travel booking system, password manager, expense suite, enterprise collaboration platform, browser extension, native mobile app, or complex dashboard.
+Do not build a full CRM, calendar app, travel booking system, password manager, expense suite, enterprise collaboration platform, browser extension, native mobile app, complex dashboard, or multi-agent orchestration system in V1.

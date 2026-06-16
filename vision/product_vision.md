@@ -6,7 +6,21 @@ Build a proactive AI chief-of-staff and memory system.
 
 The user should never have to be their own librarian.
 
+One inbox. Infinite organization.
+
 Chief of Staff captures what matters, organizes it automatically, builds context across time, remembers durable facts, researches proactively, and suggests useful next actions while leaving the user in control.
+
+## The Problem
+
+Do not build a notes app.
+
+Do not build a CRM.
+
+Do not build a task manager.
+
+Build a system that maintains context for the user over time and helps them act on it.
+
+The product is not a better folder, tag, or dashboard. It is a memory and context layer for people whose work, relationships, ideas, and opportunities are too scattered to maintain manually.
 
 ## What The System Should Do
 
@@ -44,6 +58,11 @@ Chief of Staff captures what matters, organizes it automatically, builds context
 8. Cross-device access.
 9. Privacy-first design.
 10. The product becomes more valuable with time.
+
+The two most important expressions of the product are:
+
+- The user should never have to be their own librarian.
+- One inbox. Infinite organization.
 
 ## Product Promise
 
