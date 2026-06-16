@@ -23,7 +23,7 @@ async function InboxContent({ searchParams }: { searchParams: Promise<{ captured
       </nav>
 
       <section className="hero">
-        <div className="eyebrow">Universal inbox</div>
+        <p className="section-label">Universal inbox</p>
         <h1>Recent source items.</h1>
         <p>
           {total} raw capture{total === 1 ? "" : "s"} preserved. This is source-backed memory ground zero.

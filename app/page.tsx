@@ -12,7 +12,7 @@ export default function Home() {
       </nav>
 
       <section className="hero">
-        <div className="eyebrow">Build v0 · Capture → Recall → Source-backed Retrieval</div>
+        <p className="section-label">Trusted External Memory v0</p>
         <h1>One inbox for messy context.</h1>
         <p>
           Chief of Staff is not being built yet. This version only proves the memory foundation:

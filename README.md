@@ -42,6 +42,7 @@ Then open:
 ## Production-style check
 
 ```bash
+npm run lint
 npm run build
 npm run start
 ```

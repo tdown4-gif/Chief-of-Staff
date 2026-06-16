@@ -19,7 +19,7 @@ export default async function CapturePage({ searchParams }: CapturePageProps) {
       : undefined;
 
   return (
-    <main className="shell">
+    <main className="shell capture-shell">
       <nav className="nav" aria-label="Main navigation">
         <Link href="/">Trusted External Memory</Link>
         <div className="nav-links">
@@ -27,12 +27,11 @@ export default async function CapturePage({ searchParams }: CapturePageProps) {
         </div>
       </nav>
 
-      <section className="hero">
-        <div className="eyebrow">Universal inbox</div>
-        <h1>Capture now. Organize later.</h1>
+      <section className="hero capture-hero">
+        <p className="section-label">Universal inbox</p>
+        <h1>Capture now.</h1>
         <p>
-          Save the raw source exactly as it arrives. V0 deliberately avoids folders, tags, CRM fields,
-          dashboards, and future Chief-of-Staff features.
+          Save the raw source exactly as it arrives. No folders, tags, CRM fields, or dashboard work.
         </p>
       </section>
 

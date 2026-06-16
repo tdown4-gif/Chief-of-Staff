@@ -23,7 +23,7 @@ body {
   margin: 0;
   min-height: 100%;
   color: var(--ink);
-  background: radial-gradient(circle at top left, #eef2ff, transparent 32rem), var(--bg);
+  background: var(--bg);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -50,6 +50,7 @@ input {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 24px;
+  font-size: 0.95rem;
 }
 
 .nav-links {
@@ -60,7 +61,7 @@ input {
 .nav-link,
 .button,
 .secondary-button {
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 10px 14px;
   border: 1px solid var(--line);
   background: var(--card);
@@ -84,31 +85,39 @@ input {
 }
 
 .hero {
-  padding: 34px;
+  padding: 28px;
   border: 1px solid var(--line);
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
+  border-radius: 8px;
+  background: #ffffff;
 }
 
-.eyebrow {
+.capture-shell {
+  max-width: 760px;
+}
+
+.capture-hero {
+  padding: 20px;
+}
+
+.section-label {
+  margin: 0 0 8px;
   color: var(--muted);
   font-weight: 750;
-  letter-spacing: 0.08em;
   text-transform: uppercase;
   font-size: 0.78rem;
+  line-height: 1.35;
 }
 
 h1 {
   margin: 8px 0 12px;
-  font-size: clamp(2.2rem, 8vw, 4.7rem);
-  line-height: 0.95;
-  letter-spacing: -0.07em;
+  font-size: clamp(2rem, 8vw, 3.7rem);
+  line-height: 1;
+  letter-spacing: 0;
 }
 
 h2 {
   margin: 0 0 12px;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 p {
@@ -126,8 +135,8 @@ p {
 .card,
 .capture-card {
   border: 1px solid var(--line);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.92);
+  border-radius: 8px;
+  background: #ffffff;
   padding: 18px;
 }
 
@@ -141,10 +150,12 @@ p {
   min-height: 220px;
   resize: vertical;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 8px;
   padding: 16px;
   background: white;
   color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .capture-textarea:focus {
@@ -177,7 +188,7 @@ p {
 
 .capture-item {
   border: 1px solid var(--line);
-  border-radius: 20px;
+  border-radius: 8px;
   padding: 16px;
   background: var(--card);
 }
@@ -193,7 +204,7 @@ p {
 }
 
 .badge {
-  border-radius: 999px;
+  border-radius: 6px;
   padding: 4px 8px;
   background: var(--brand-soft);
   color: #334155;
@@ -210,26 +221,31 @@ p {
 
 .empty-state {
   border: 1px dashed #cbd5e1;
-  border-radius: 20px;
+  border-radius: 8px;
   padding: 24px;
   color: var(--muted);
   text-align: center;
-  background: rgba(255, 255, 255, 0.64);
+  background: #ffffff;
 }
 
 @media (max-width: 720px) {
   .shell {
-    padding: 16px;
+    padding: 14px;
   }
 
   .nav {
-    align-items: flex-start;
+    align-items: stretch;
     flex-direction: column;
+    margin-bottom: 14px;
   }
 
   .hero {
-    padding: 22px;
-    border-radius: 22px;
+    padding: 18px;
+  }
+
+  h1 {
+    font-size: 2rem;
+    line-height: 1.05;
   }
 
   .grid {
@@ -245,5 +261,14 @@ p {
   .secondary-button,
   .nav-link {
     width: 100%;
+  }
+
+  .capture-card {
+    padding: 14px;
+  }
+
+  .capture-textarea {
+    min-height: 260px;
+    font-size: 16px;
   }
 }

@@ -12,8 +12,10 @@ export function CaptureForm({ error }: { error?: string }) {
         className="capture-textarea"
         autoFocus
         required
+        rows={8}
         minLength={1}
         maxLength={10000}
+        spellCheck
         placeholder="Example: Need to follow up with Sarah about pricing after the demo. Also had an idea for insurance agencies: remember renewal dates and suggest outreach."
       />
       {error ? <p className="error">{error}</p> : null}
