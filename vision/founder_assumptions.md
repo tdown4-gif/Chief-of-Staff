@@ -19,6 +19,29 @@ The riskiest questions are not only technical. They are about whether people wan
 - Users will correct the system when it is wrong.
 - One suggested action can be more valuable than a complex dashboard.
 
+## Primary Founder Risk
+
+The founder's biggest risk is feature creep.
+
+Every new recommendation should be tested against one question:
+
+Does this make the one-inbox memory system better?
+
+If not, defer it.
+
+The product has already touched notes, memory, travel, gifts, CRM, SBIRs, skills, resume updates, expenses, calendar, relationships, and research. That breadth is useful for future vision, but dangerous for V1.
+
+The actual breakthrough is the AI memory layer. Everything else depends on it:
+
+- Travel recommendations need memory.
+- Gift reminders need memory.
+- Skills graph needs memory.
+- SBIR tracking needs memory.
+- Resume updates need memory.
+- Relationship intelligence needs memory.
+
+If the memory layer works, the rest becomes possible. If the memory layer does not work, none of the other features matter.
+
 ## Target User Assumptions
 
 The first users are likely to be high-context individuals:

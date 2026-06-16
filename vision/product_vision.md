@@ -88,6 +88,12 @@ The product should quietly transform scattered inputs into usable memory:
 - Native mobile app
 - Complex dashboards
 
+## Memory Layer First
+
+The breakthrough is the AI memory layer.
+
+Future features should be evaluated by whether they strengthen the one-inbox memory system. If a feature does not improve capture, organization, memory quality, retrieval, context, trust, or actionability, defer it.
+
 ## Future Vision
 
 - Travel preference learning
