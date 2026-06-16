@@ -1,28 +1,54 @@
 # MVP
 
+## Internal V1 Name
+
+Trusted External Memory.
+
+The V1 product is not Chief of Staff yet. It is the memory foundation that a chief-of-staff experience can later sit on.
+
 ## Smallest Useful Version
 
-The MVP is a universal inbox plus AI memory layer that can capture unstructured inputs, classify them into core objects, link related context, and surface useful follow-ups.
+The MVP is a dead-simple capture and recall system that lets Ty dump messy context and reliably recover it later with source-backed answers.
 
-It should prove one central behavior: a user can throw information into Chief of Staff and later receive organized, explainable, useful memory without manually maintaining a personal knowledge base.
+It should prove one central behavior: Ty can throw information into the system and later receive accurate, explainable, useful memory without manually maintaining a personal knowledge base.
+
+The product should excel at:
+
+1. Capture
+2. Recall
+3. Context
+4. Source-backed retrieval
+
+The product does not need to excel at:
+
+- Research
+- Travel
+- Gifts
+- Resume updates
+- Skills graphs
+- CRM
+- SBIR tracking
+- Calendar management
+
+Those may become future applications of the memory layer.
 
 ## V1 Jobs To Be Done
 
 - Capture a thought, note, link, document summary, task, event, or contact detail quickly.
-- Automatically classify captured items into core object types.
-- Extract people, companies, projects, tasks, dates, preferences, and opportunities.
-- Show why an item was organized a certain way.
+- Automatically identify a small set of useful memory objects.
+- Extract people, projects, ideas, commitments, and source context.
+- Show where each memory came from.
 - Retrieve relevant memory by search or natural language question.
-- Suggest next actions based on accumulated context.
-- Let the user accept, edit, dismiss, or delete AI-generated structure.
+- Answer questions like "Who was that insurance guy I met?" and "What AI business ideas have I mentioned more than once?"
+- Let the user edit, dismiss, or delete AI-generated memory.
 
 ## V1 Core Flows
 
 1. Capture something into the universal inbox.
-2. AI analyzes the item and proposes objects, tags, links, and tasks.
-3. User reviews only when needed.
-4. System stores durable memory with source references.
-5. User asks a question or receives a proactive suggestion.
+2. AI analyzes the item and proposes source-backed memory.
+3. System stores the raw source and extracted memory with confidence.
+4. User asks a question later.
+5. System recalls the answer with source proof and related context.
 
 ## MVP Scope
 
@@ -30,12 +56,10 @@ It should prove one central behavior: a user can throw information into Chief of
 - Universal inbox.
 - Manual capture form.
 - File or document text capture.
-- AI object extraction.
-- Basic memory graph.
+- AI extraction for people, projects, ideas, commitments, and sources.
 - Search and conversational retrieval.
-- Suggested tasks and follow-ups.
-- User approval for actions.
 - Memory source citations.
+- Basic open-loops list after recall quality is trustworthy.
 
 ## Explicit Non-Goals
 
@@ -48,19 +72,40 @@ It should prove one central behavior: a user can throw information into Chief of
 - Browser extension
 - Native mobile app
 - Complex dashboards
+- Proactive research
+- Gift reminders
+- Resume updates
+- Skills graph
+- SBIR tracking
+- Travel preference learning
+- Relationship intelligence
+- Calendar management
 
 ## MVP Success Criteria
 
-- Users capture information without deciding where it belongs.
-- The system correctly identifies useful object types most of the time.
-- Users can trace each memory back to its source.
-- Suggested actions feel specific and grounded, not generic.
-- The product becomes more useful after repeated capture.
+- Ty captures information without deciding where it belongs.
+- Ty can dump 1,000 things into the system and still retrieve useful context months later.
+- The system can reliably answer questions about people, ideas, commitments, and projects.
+- Every answer can be traced back to source material.
+- Search and chat are faster than Ty's current habit of re-researching or trying to remember.
+- The product reduces cognitive load instead of creating another system to maintain.
 
 ## Key Risks
 
-- The product may feel like a notes app unless proactive suggestions are genuinely useful.
+- The product may become a prettier junk drawer.
 - The AI may over-organize and create clutter.
 - Memory mistakes can reduce trust quickly.
 - Privacy expectations will be high because the system handles sensitive context.
 - The MVP may be too broad if every core object is treated as equally important.
+- One inbox can become one giant pile if retrieval quality is weak.
+- Review workflows can become homework.
+
+## V1 Test Questions
+
+- Can it answer: "Who was that insurance guy I met?"
+- Can it answer: "What were my AI business ideas from March?"
+- Can it answer: "What commitments have I made recently?"
+- Can it answer: "What am I forgetting?"
+- Can it answer: "What were the insurance AI ideas I mentioned more than once?"
+
+If the answer is no, no amount of travel planning, gift reminders, or proactive research matters.

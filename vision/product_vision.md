@@ -4,6 +4,8 @@
 
 Build trusted external memory for Ty first.
 
+You generate more value than you can reliably remember.
+
 Chief of Staff exists because the founder wants to spend less time organizing information and more time acting on it.
 
 The user should never have to be their own librarian.
@@ -106,11 +108,24 @@ The product should quietly transform scattered inputs into usable memory:
 - Native mobile app
 - Complex dashboards
 
-## Memory Layer First
+## Trusted External Memory First
 
 The breakthrough is trusted external memory.
 
-Future features should be evaluated by whether they strengthen the one-inbox memory system. If a feature does not improve capture, organization, memory quality, retrieval, context, trust, or actionability, defer it.
+Internal V1 name: Trusted External Memory.
+
+Future features should be evaluated by whether they strengthen the one-inbox memory system. If a feature does not improve capture, recall, organization, memory quality, retrieval, context, trust, or actionability, defer it.
+
+The sequence is:
+
+1. Memory
+2. Trust
+3. Usage
+4. Everything else
+
+If the system cannot reliably recover people, ideas, commitments, and project context from months ago, the MVP has not succeeded.
+
+Travel, gifts, skills, subscriptions, resumes, SBIR tracking, and relationship intelligence are future applications of the memory layer. They are not the V1 product.
 
 ## Future Vision
 

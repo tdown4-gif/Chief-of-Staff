@@ -69,6 +69,12 @@ The breakthrough is not a generic AI chief of staff.
 
 The breakthrough is trusted external memory.
 
+Internal V1 name: Trusted External Memory.
+
+Anchor problem:
+
+You generate more value than you can reliably remember.
+
 Everything else sits on top of that:
 
 - Travel recommendations need memory.
@@ -91,14 +97,19 @@ V1 should prove the memory layer, not the full future vision.
 Prioritize:
 
 - Capture.
-- AI classification.
-- Memory objects.
-- Relationships.
-- Search.
-- One suggested action.
+- Recall.
+- Context.
+- Source-backed retrieval.
+- People, projects, ideas, commitments, and sources.
 
 Defer:
 
+- Proactive research.
+- Travel recommendations.
+- Gift reminders.
+- Resume updates.
+- Skills graph.
+- SBIR tracking.
 - Travel booking.
 - Full CRM.
 - Expense platform.
