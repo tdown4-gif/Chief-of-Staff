@@ -35,6 +35,8 @@ Those may become future applications of the memory layer.
 ## V1 Jobs To Be Done
 
 - Capture a thought, note, link, document summary, task, event, or contact detail quickly.
+- Capture from laptop and phone without deciding where the information belongs.
+- Provide an iPhone-friendly quick capture path, ideally from the home screen.
 - Automatically identify a small set of useful memory objects.
 - Extract people, projects, ideas, commitments, and source context.
 - Show where each memory came from.
@@ -53,6 +55,8 @@ Those may become future applications of the memory layer.
 ## MVP Scope
 
 - Web app.
+- Cross-device responsive capture experience.
+- iPhone home-screen capture shortcut or lightweight PWA entry point.
 - Universal inbox.
 - Manual capture form.
 - File or document text capture.
@@ -70,7 +74,7 @@ Those may become future applications of the memory layer.
 - Expense management suite
 - Enterprise collaboration
 - Browser extension
-- Native mobile app
+- Full native mobile app
 - Complex dashboards
 - Proactive research
 - Gift reminders
@@ -84,6 +88,7 @@ Those may become future applications of the memory layer.
 ## MVP Success Criteria
 
 - Ty captures information without deciding where it belongs.
+- Ty can capture an idea from laptop or phone in seconds.
 - Ty can dump 1,000 things into the system and still retrieve useful context months later.
 - The system can reliably answer questions about people, ideas, commitments, and projects.
 - Every answer can be traced back to source material.
@@ -99,6 +104,7 @@ Those may become future applications of the memory layer.
 - The MVP may be too broad if every core object is treated as equally important.
 - One inbox can become one giant pile if retrieval quality is weak.
 - Review workflows can become homework.
+- If phone capture is clumsy, Ty will lose ideas before they enter the system.
 
 ## V1 Test Questions
 

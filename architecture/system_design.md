@@ -35,6 +35,20 @@ The architecture exists to maintain context over time, not to make the user main
 
 The first client for capture, review, search, object pages, and suggestions.
 
+It must be responsive and useful on both laptop and phone. V1 can avoid a full native mobile app, but it cannot ignore mobile capture.
+
+### Quick Capture Surface
+
+A minimal phone-first capture path for dumping ideas quickly.
+
+V1 options:
+
+- Responsive web capture page saved to the iPhone home screen.
+- iOS Shortcut that submits text into the universal inbox.
+- Lightweight PWA entry point.
+
+A polished native app and widget can come later. The core requirement is that Ty can capture an idea from the phone home screen before it disappears.
+
 ### Universal Inbox
 
 Accepts raw notes, pasted text, links, document text, and manual entries.
@@ -85,4 +99,6 @@ Privacy-first design should be part of the architecture, not a later feature. V1
 
 ## V1 Constraints
 
-Do not build a full CRM, calendar app, travel booking system, password manager, expense suite, enterprise collaboration platform, browser extension, native mobile app, complex dashboard, or multi-agent orchestration system in V1.
+Do not build a full CRM, calendar app, travel booking system, password manager, expense suite, enterprise collaboration platform, browser extension, full native mobile app, complex dashboard, or multi-agent orchestration system in V1.
+
+Do not confuse "no full native mobile app" with "no mobile capture." Cross-device capture is core to the product.
