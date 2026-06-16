@@ -1,0 +1,43 @@
+import Link from "next/link";
+
+export default function Home() {
+  return (
+    <main className="shell">
+      <nav className="nav" aria-label="Main navigation">
+        <strong>Trusted External Memory</strong>
+        <div className="nav-links">
+          <Link className="nav-link" href="/capture">Capture</Link>
+          <Link className="nav-link" href="/inbox">Inbox</Link>
+        </div>
+      </nav>
+
+      <section className="hero">
+        <div className="eyebrow">Build v0 · Capture → Recall → Source-backed Retrieval</div>
+        <h1>One inbox for messy context.</h1>
+        <p>
+          Chief of Staff is not being built yet. This version only proves the memory foundation:
+          capture raw thoughts quickly, preserve the source, and make recent context visible.
+        </p>
+        <div className="nav-links">
+          <Link className="button" href="/capture">Capture a thought</Link>
+          <Link className="secondary-button" href="/inbox">View recent captures</Link>
+        </div>
+      </section>
+
+      <section className="grid" aria-label="V0 scope">
+        <div className="card">
+          <h2>Capture</h2>
+          <p>Fast text capture from laptop or phone with no folders, tags, or organization decisions.</p>
+        </div>
+        <div className="card">
+          <h2>Preserve</h2>
+          <p>Every entry is stored as a raw source item with timestamp and source type.</p>
+        </div>
+        <div className="card">
+          <h2>Defer</h2>
+          <p>No travel, gifts, CRM, dashboards, calendar management, or proactive research in v0.</p>
+        </div>
+      </section>
+    </main>
+  );
+}

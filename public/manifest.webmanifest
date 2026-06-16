@@ -1,0 +1,10 @@
+{
+  "name": "Trusted External Memory",
+  "short_name": "Memory",
+  "description": "Fast capture for messy context.",
+  "start_url": "/capture",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#111827",
+  "icons": []
+}
