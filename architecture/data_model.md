@@ -37,6 +37,37 @@ Fields:
 - source_ids
 - explanation
 
+Future lifecycle-ready fields:
+
+- lifecycle_state
+- first_observed_at
+- last_referenced_at
+- reference_count
+- action_count
+- stale_after
+- related_active_object_ids
+- retrieval_priority
+
+The V1 schema does not need to implement memory decay, but it should avoid choices that make lifecycle states hard to add later.
+
+Potential lifecycle states:
+
+- permanent
+- active
+- temporary
+- archived
+- dismissed
+
+Confidence should be represented as a 0-100 score so the system can separate strong extractions from weak inferences.
+
+Example:
+
+User capture: "Thinking about New Zealand next July"
+
+- Trip: New Zealand next July, confidence 95
+- Preferred airline: Delta, confidence 62
+- Travel goal: Vacation, confidence 40
+
 ### Object
 
 Structured entity extracted from memory and capture.
@@ -108,7 +139,11 @@ Fields:
 - User actions should be explicit for changes that affect outside systems.
 - Privacy level should travel with memories and objects.
 - The graph should tolerate uncertainty, merging, and correction.
+- Not all information should be treated equally.
+- The memory system should not become a giant junk drawer.
 
 ## V1 Storage Shape
 
 V1 can use relational tables for core entities and relationship edges, with embeddings for semantic retrieval. The product should not require a specialized graph database before proving the memory behavior.
+
+Do not build full memory lifecycle behavior in V1. Design for it by keeping confidence, timestamps, source references, related objects, and future lifecycle fields available.

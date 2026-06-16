@@ -51,6 +51,67 @@ Every important graph edge should be explainable:
 - When was it last updated?
 - Can the user edit or delete it?
 
+## Memory Lifecycle
+
+Not all information should be treated equally. The system should eventually support multiple memory layers so durable facts, currently useful context, and short-lived information do not compete as if they have the same value.
+
+### Permanent Memory
+
+Rarely changes and should be retained indefinitely.
+
+Examples:
+
+- Family members
+- Core relationships
+- Skills
+- Certifications
+- Travel preferences
+- Career history
+- Long-term projects
+- User preferences
+
+### Active Memory
+
+Currently relevant and frequently surfaced.
+
+Examples:
+
+- Current projects
+- Open opportunities
+- Active research
+- Upcoming trips
+- Current goals
+- Follow-ups
+
+### Temporary Memory
+
+Useful for a limited period and should naturally fade.
+
+Examples:
+
+- One-off meeting notes
+- Temporary reminders
+- Time-sensitive research
+- Short-lived ideas
+- Administrative details
+
+## Lifecycle Signals
+
+The system should eventually evaluate:
+
+- How often information is referenced.
+- Whether information leads to actions.
+- Whether information is connected to active projects.
+- Whether information has become stale.
+
+The goal is to prevent the memory system from becoming a giant junk drawer.
+
+Future research question:
+
+Should memory decay automatically, require user confirmation, or simply lower retrieval priority over time?
+
+Do not build this in V1. Design the data model so memory lifecycle states can be added later.
+
 ## Time And Decay
 
 Memory should be persistent, but not static. The graph should track freshness and usage:
