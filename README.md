@@ -44,6 +44,7 @@ If port 3000 is already in use, Next.js will print the alternate local URL, such
 ## Production-style check
 
 ```bash
+npm test
 npm run lint
 npm run build
 npm run start

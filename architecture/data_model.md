@@ -147,3 +147,40 @@ Fields:
 V1 can use relational tables for core entities and relationship edges, with embeddings for semantic retrieval. The product should not require a specialized graph database before proving the memory behavior.
 
 Do not build full memory lifecycle behavior in V1. Design for it by keeping confidence, timestamps, source references, related objects, and future lifecycle fields available.
+
+## Implemented v0 Schema
+
+The current app intentionally implements the smallest source-backed memory shape:
+
+### source_items
+
+Raw captures from the universal inbox.
+
+- `id`
+- `content`
+- `source_type`
+- `created_at`
+
+`content` is preserved verbatim. Validation rejects whitespace-only captures, but does not trim stored source text.
+
+### memories
+
+Extracted memory records that point back to raw source.
+
+- `id`
+- `source_item_id`
+- `kind`
+- `content`
+- `confidence`
+- `rationale`
+- `metadata_json`
+- `created_at`
+
+Allowed `kind` values are:
+
+- `person`
+- `project`
+- `idea`
+- `commitment`
+
+This deliberately avoids separate person, project, idea, and commitment modules for v0. Those object types are represented by `memories.kind` until extraction and recall prove that more structure is needed.

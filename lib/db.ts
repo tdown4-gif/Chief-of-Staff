@@ -9,10 +9,43 @@ export type SourceItem = {
   createdAt: string;
 };
 
+export type MemoryKind = "person" | "project" | "idea" | "commitment";
+
+export type Memory = {
+  id: number;
+  sourceItemId: number;
+  kind: MemoryKind;
+  content: string;
+  confidence: number;
+  rationale: string;
+  metadataJson: string | null;
+  createdAt: string;
+};
+
+export type CreateMemoryInput = {
+  sourceItemId: number;
+  kind: MemoryKind;
+  content: string;
+  confidence: number;
+  rationale: string;
+  metadataJson?: string | null;
+};
+
 type SourceItemRow = {
   id: number;
   content: string;
   source_type: string;
+  created_at: string;
+};
+
+type MemoryRow = {
+  id: number;
+  source_item_id: number;
+  kind: MemoryKind;
+  content: string;
+  confidence: number;
+  rationale: string;
+  metadata_json: string | null;
   created_at: string;
 };
 
@@ -26,6 +59,7 @@ function getDb() {
     mkdirSync(path.dirname(dbPath), { recursive: true });
     db = new Database(dbPath);
     db.pragma("journal_mode = WAL");
+    db.pragma("foreign_keys = ON");
     db.exec(`
       CREATE TABLE IF NOT EXISTS source_items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,6 +67,21 @@ function getDb() {
         source_type TEXT NOT NULL DEFAULT 'text',
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
+
+      CREATE TABLE IF NOT EXISTS memories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        source_item_id INTEGER NOT NULL,
+        kind TEXT NOT NULL CHECK (kind IN ('person', 'project', 'idea', 'commitment')),
+        content TEXT NOT NULL,
+        confidence INTEGER NOT NULL CHECK (confidence >= 0 AND confidence <= 100),
+        rationale TEXT NOT NULL DEFAULT '',
+        metadata_json TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (source_item_id) REFERENCES source_items(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_memories_source_item_id ON memories(source_item_id);
+      CREATE INDEX IF NOT EXISTS idx_memories_kind ON memories(kind);
     `);
   }
 
@@ -44,6 +93,19 @@ function mapSourceItem(row: SourceItemRow): SourceItem {
     id: row.id,
     content: row.content,
     sourceType: row.source_type,
+    createdAt: row.created_at
+  };
+}
+
+function mapMemory(row: MemoryRow): Memory {
+  return {
+    id: row.id,
+    sourceItemId: row.source_item_id,
+    kind: row.kind,
+    content: row.content,
+    confidence: row.confidence,
+    rationale: row.rationale,
+    metadataJson: row.metadata_json,
     createdAt: row.created_at
   };
 }
@@ -81,4 +143,58 @@ export function listRecentSourceItems(limit = 20): SourceItem[] {
 export function countSourceItems(): number {
   const row = getDb().prepare("SELECT COUNT(*) as count FROM source_items").get() as { count: number };
   return row.count;
+}
+
+export function createMemory(input: CreateMemoryInput): Memory {
+  if (!Number.isInteger(input.sourceItemId) || input.sourceItemId < 1) {
+    throw new Error("Memory requires a valid source item.");
+  }
+
+  if (!input.content.trim()) {
+    throw new Error("Memory content cannot be empty.");
+  }
+
+  if (!Number.isInteger(input.confidence) || input.confidence < 0 || input.confidence > 100) {
+    throw new Error("Memory confidence must be an integer from 0 to 100.");
+  }
+
+  const createdAt = new Date().toISOString();
+  const result = getDb()
+    .prepare(`
+      INSERT INTO memories (source_item_id, kind, content, confidence, rationale, metadata_json, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `)
+    .run(
+      input.sourceItemId,
+      input.kind,
+      input.content,
+      input.confidence,
+      input.rationale,
+      input.metadataJson ?? null,
+      createdAt
+    );
+
+  return {
+    id: Number(result.lastInsertRowid),
+    sourceItemId: input.sourceItemId,
+    kind: input.kind,
+    content: input.content,
+    confidence: input.confidence,
+    rationale: input.rationale,
+    metadataJson: input.metadataJson ?? null,
+    createdAt
+  };
+}
+
+export function listMemoriesForSource(sourceItemId: number): Memory[] {
+  const rows = getDb()
+    .prepare(`
+      SELECT id, source_item_id, kind, content, confidence, rationale, metadata_json, created_at
+      FROM memories
+      WHERE source_item_id = ?
+      ORDER BY id DESC
+    `)
+    .all(sourceItemId) as MemoryRow[];
+
+  return rows.map(mapMemory);
 }
