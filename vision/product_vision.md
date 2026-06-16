@@ -2,13 +2,25 @@
 
 ## North Star
 
-Build a proactive AI chief-of-staff and memory system.
+Build trusted external memory for Ty first.
 
 The user should never have to be their own librarian.
 
 One inbox. Infinite organization.
 
 Chief of Staff captures what matters, organizes it automatically, builds context across time, remembers durable facts, researches proactively, and suggests useful next actions while leaving the user in control.
+
+## Primary Goal
+
+Build the system Ty wishes existed for himself.
+
+Secondary goal: determine later whether others want it.
+
+Optimize for usefulness, not market size.
+
+Every design decision should answer:
+
+Would Ty personally use this every day?
 
 ## The Problem
 
@@ -20,7 +32,9 @@ Do not build a task manager.
 
 Build a system that maintains context for the user over time and helps them act on it.
 
-The product is not a better folder, tag, or dashboard. It is a memory and context layer for people whose work, relationships, ideas, and opportunities are too scattered to maintain manually.
+The product is not a better folder, tag, or dashboard. It is trusted external memory for a person whose work, relationships, ideas, opportunities, preferences, and obligations are too scattered to maintain manually.
+
+The recurring problem is cognitive load, not generic productivity.
 
 ## What The System Should Do
 
@@ -90,7 +104,7 @@ The product should quietly transform scattered inputs into usable memory:
 
 ## Memory Layer First
 
-The breakthrough is the AI memory layer.
+The breakthrough is trusted external memory.
 
 Future features should be evaluated by whether they strengthen the one-inbox memory system. If a feature does not improve capture, organization, memory quality, retrieval, context, trust, or actionability, defer it.
 

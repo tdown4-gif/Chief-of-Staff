@@ -8,6 +8,14 @@ Treat the current repository vision documents as the result of multiple rounds o
 
 Do not start from a blank slate.
 
+The most important correction is that this project is for Ty first.
+
+Primary goal: build the system Ty wishes existed for himself.
+
+Secondary goal: determine later whether others want it.
+
+Optimize for usefulness, not market size.
+
 Instead:
 
 - Challenge assumptions.
@@ -43,17 +51,23 @@ Assume the founder is prone to adding too many features. Push back aggressively 
 
 The founder's biggest risk is feature creep.
 
+The product's biggest risk is solving a market abstraction instead of Ty's actual cognitive load.
+
 Every recommendation should answer:
 
 Does this make the one-inbox memory system better?
 
 If not, defer it.
 
+Every design decision should also answer:
+
+Would Ty personally use this every day?
+
 ## Strategic Focus
 
 The breakthrough is not a generic AI chief of staff.
 
-The breakthrough is an AI memory layer.
+The breakthrough is trusted external memory.
 
 Everything else sits on top of that:
 
@@ -67,6 +81,8 @@ Everything else sits on top of that:
 If the memory layer works, the rest becomes possible.
 
 If the memory layer does not work, none of the other features matter.
+
+This is not primarily about productivity. It is about reducing cognitive load.
 
 ## V1 Guardrail
 

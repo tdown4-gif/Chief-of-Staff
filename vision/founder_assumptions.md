@@ -2,9 +2,33 @@
 
 ## Purpose
 
-This file tracks the assumptions that can make or break Chief of Staff as a business.
+This file tracks the assumptions that can make or break Chief of Staff as Ty's trusted external memory system.
 
-The riskiest questions are not only technical. They are about whether people want this behavior, trust this system, and return often enough for memory to compound.
+The riskiest questions are not only technical. They are about whether Ty will use this every day, trust it with real context, and return often enough for memory to compound.
+
+If the system becomes useful for Ty for six months, company questions can be revisited from a stronger position.
+
+## Primary Personal Assumption
+
+This project is for Ty first.
+
+The product should answer:
+
+- Will Ty use this every day?
+- Will it save Ty time?
+- Will it remember things Ty forgets?
+- Will it reduce Ty's mental load?
+- Will it work across Ty's devices?
+- Will Ty trust it enough to dump important information into it?
+
+The startup question is secondary:
+
+- What market?
+- What TAM?
+- What moat?
+- What ICP?
+
+Those questions matter later, after the system proves personal daily usefulness.
 
 ## Core Product Assumptions
 
@@ -19,9 +43,11 @@ The riskiest questions are not only technical. They are about whether people wan
 - Users will correct the system when it is wrong.
 - One suggested action can be more valuable than a complex dashboard.
 
-## Primary Founder Risk
+## Primary Builder Risk
 
-The founder's biggest risk is feature creep.
+The biggest builder risk is feature creep.
+
+The second-biggest risk is designing for investors, markets, or abstract users before proving personal utility.
 
 Every new recommendation should be tested against one question:
 
@@ -29,9 +55,13 @@ Does this make the one-inbox memory system better?
 
 If not, defer it.
 
+Every design decision should also be tested against:
+
+Would Ty personally use this every day?
+
 The product has already touched notes, memory, travel, gifts, CRM, SBIRs, skills, resume updates, expenses, calendar, relationships, and research. That breadth is useful for future vision, but dangerous for V1.
 
-The actual breakthrough is the AI memory layer. Everything else depends on it:
+The actual breakthrough is trusted external memory. Everything else depends on it:
 
 - Travel recommendations need memory.
 - Gift reminders need memory.
@@ -40,7 +70,7 @@ The actual breakthrough is the AI memory layer. Everything else depends on it:
 - Resume updates need memory.
 - Relationship intelligence needs memory.
 
-If the memory layer works, the rest becomes possible. If the memory layer does not work, none of the other features matter.
+If the memory layer works for Ty, the rest becomes possible. If the memory layer does not work for Ty, none of the other features matter.
 
 ## Target User Assumptions
 
