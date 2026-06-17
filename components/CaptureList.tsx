@@ -61,7 +61,15 @@ export function CaptureList({
                     <div className="memory-row" key={memory.id}>
                       <div className="capture-meta">
                         <span className="badge">{memory.kind}</span>
-                        <span className={reviewState.statusTone === "muted" ? "badge badge-muted" : "badge"}>
+                        <span
+                          className={
+                            reviewState.statusTone === "review"
+                              ? "badge badge-review"
+                              : reviewState.statusTone === "muted"
+                                ? "badge badge-muted"
+                                : "badge"
+                          }
+                        >
                           {reviewState.statusLabel}
                         </span>
                         <span>{memory.confidence}% confidence</span>
@@ -95,7 +103,12 @@ export function CaptureList({
                   );
                 })}
               </div>
-            ) : null}
+            ) : (
+              <div className="memory-list memory-list-empty" aria-label={`No proposed memories for source ${item.id}`}>
+                <p className="memory-list-title">No proposed memories</p>
+                <p className="memory-rationale">Raw source is preserved and can still appear in recall as a source match.</p>
+              </div>
+            )}
           </article>
         );
       })}

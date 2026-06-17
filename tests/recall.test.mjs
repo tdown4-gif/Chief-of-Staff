@@ -49,6 +49,41 @@ test("recall searches raw captures even when no memory has been extracted", asyn
   assert.match(results[0].sourceSnippet, /venture briefs/);
 });
 
+test("recall includes raw source fallback when structured memory results are empty for an inferred kind", async () => {
+  const dbModule = await importWithTempDb("../lib/db.ts");
+  const { recall } = await import("../lib/recall.ts");
+  const source = dbModule.createSourceItem("Family reminder: Dad Medicare letter follow up. ask if he mailed forms.", "text");
+
+  const results = recall("What do I owe my dad about Medicare?");
+
+  assert.equal(results.length, 1);
+  assert.equal(results[0].source.id, source.id);
+  assert.equal(results[0].memory, null);
+  assert.equal(results[0].resultType, "raw_fallback");
+  assert.match(results[0].sourceSnippet, /Dad Medicare/);
+});
+
+test("recall labels low-confidence memory matches as review-needed", async () => {
+  const dbModule = await importWithTempDb("../lib/db.ts");
+  const { recall } = await import("../lib/recall.ts");
+  const source = dbModule.createSourceItem("Met Mike. Insurance agency owner.", "text");
+
+  dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "person",
+    content: "Mike",
+    confidence: 84,
+    rationale: "The source says Ty met Mike.",
+    status: "needs_review"
+  });
+
+  const results = recall("Who was insurance Mike?");
+
+  assert.equal(results.length, 1);
+  assert.equal(results[0].resultType, "needs_review");
+  assert.equal(results[0].memory?.status, "needs_review");
+});
+
 test("recall can match source type when asking for links or documents", async () => {
   const dbModule = await importWithTempDb("../lib/db.ts");
   const { recall } = await import("../lib/recall.ts");

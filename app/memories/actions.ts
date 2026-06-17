@@ -4,7 +4,7 @@ import { deleteMemory, updateMemoryContent, updateMemoryStatus, type MemoryStatu
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-const allowedStatuses = new Set<MemoryStatus>(["active", "done", "dismissed"]);
+const allowedStatuses = new Set<MemoryStatus>(["active", "needs_review", "done", "dismissed"]);
 const allowedReturnPaths = new Set(["/inbox", "/capture", "/recall", "/open-loops"]);
 
 function readMemoryId(formData: FormData): number {

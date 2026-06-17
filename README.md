@@ -73,6 +73,14 @@ node scripts/ty-chaos-memory-eval.mjs
 
 It seeds 100 deliberately messy notes and reports misses, false positives, ambiguous retrievals, missing context, and weak confidence scores. This report is expected to find problems.
 
+After tuning against the chaos dataset, run the fresh holdout check:
+
+```bash
+node scripts/holdout-memory-eval.mjs
+```
+
+It seeds 20 notes and 5 queries that should not be used while tuning recall.
+
 ## First manual test
 
 1. Open `/capture` on laptop or phone.

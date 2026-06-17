@@ -10,7 +10,8 @@ export type SourceItem = {
 };
 
 export type MemoryKind = "person" | "project" | "idea" | "commitment";
-export type MemoryStatus = "active" | "done" | "dismissed";
+export type MemoryStatus = "active" | "needs_review" | "done" | "dismissed";
+export type RecallFeedbackAction = "not_relevant" | "promote_to_memory" | "add_context";
 
 export type Memory = {
   id: number;
@@ -38,6 +39,24 @@ export type MemoriesBySourceId = Record<number, Memory[]>;
 export type MemoryWithSource = {
   memory: Memory;
   source: SourceItem;
+};
+
+export type RecallFeedback = {
+  id: number;
+  query: string;
+  action: RecallFeedbackAction;
+  sourceItemId: number;
+  memoryId: number | null;
+  note: string | null;
+  createdAt: string;
+};
+
+export type CreateRecallFeedbackInput = {
+  query: string;
+  action: RecallFeedbackAction;
+  sourceItemId: number;
+  memoryId?: number | null;
+  note?: string | null;
 };
 
 type SourceItemRow = {
@@ -75,8 +94,19 @@ type MemoryWithSourceRow = {
   source_created_at: string;
 };
 
+type RecallFeedbackRow = {
+  id: number;
+  query: string;
+  action: RecallFeedbackAction;
+  source_item_id: number;
+  memory_id: number | null;
+  note: string | null;
+  created_at: string;
+};
+
 const dataDir = path.join(process.cwd(), "data");
-const memoryStatuses = new Set<MemoryStatus>(["active", "done", "dismissed"]);
+const memoryStatuses = new Set<MemoryStatus>(["active", "needs_review", "done", "dismissed"]);
+const recallFeedbackActions = new Set<RecallFeedbackAction>(["not_relevant", "promote_to_memory", "add_context"]);
 
 let db: Database.Database | undefined;
 let currentDbPath: string | undefined;
@@ -116,20 +146,60 @@ function getDb() {
         confidence INTEGER NOT NULL CHECK (confidence >= 0 AND confidence <= 100),
         rationale TEXT NOT NULL DEFAULT '',
         metadata_json TEXT,
-        status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'done', 'dismissed')),
+        status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'needs_review', 'done', 'dismissed')),
         created_at TEXT NOT NULL,
         FOREIGN KEY (source_item_id) REFERENCES source_items(id) ON DELETE CASCADE
       );
 
+      CREATE TABLE IF NOT EXISTS recall_feedback (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        query TEXT NOT NULL,
+        action TEXT NOT NULL CHECK (action IN ('not_relevant', 'promote_to_memory', 'add_context')),
+        source_item_id INTEGER NOT NULL,
+        memory_id INTEGER,
+        note TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (source_item_id) REFERENCES source_items(id) ON DELETE CASCADE,
+        FOREIGN KEY (memory_id) REFERENCES memories(id) ON DELETE SET NULL
+      );
+
       CREATE INDEX IF NOT EXISTS idx_memories_source_item_id ON memories(source_item_id);
       CREATE INDEX IF NOT EXISTS idx_memories_kind ON memories(kind);
+      CREATE INDEX IF NOT EXISTS idx_recall_feedback_source_item_id ON recall_feedback(source_item_id);
     `);
 
     const memoryColumns = db.prepare("PRAGMA table_info(memories)").all() as Array<{ name: string }>;
     if (!memoryColumns.some((column) => column.name === "status")) {
       db.exec(`
         ALTER TABLE memories
-        ADD COLUMN status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'done', 'dismissed'))
+        ADD COLUMN status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'needs_review', 'done', 'dismissed'))
+      `);
+    }
+
+    const memoryTable = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'memories'").get() as
+      | { sql: string }
+      | undefined;
+    if (memoryTable?.sql && !memoryTable.sql.includes("needs_review")) {
+      db.exec(`
+        ALTER TABLE memories RENAME TO memories_old;
+        CREATE TABLE memories (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          source_item_id INTEGER NOT NULL,
+          kind TEXT NOT NULL CHECK (kind IN ('person', 'project', 'idea', 'commitment')),
+          content TEXT NOT NULL,
+          confidence INTEGER NOT NULL CHECK (confidence >= 0 AND confidence <= 100),
+          rationale TEXT NOT NULL DEFAULT '',
+          metadata_json TEXT,
+          status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'needs_review', 'done', 'dismissed')),
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (source_item_id) REFERENCES source_items(id) ON DELETE CASCADE
+        );
+        INSERT INTO memories (id, source_item_id, kind, content, confidence, rationale, metadata_json, status, created_at)
+        SELECT id, source_item_id, kind, content, confidence, rationale, metadata_json, status, created_at
+        FROM memories_old;
+        DROP TABLE memories_old;
+        CREATE INDEX IF NOT EXISTS idx_memories_source_item_id ON memories(source_item_id);
+        CREATE INDEX IF NOT EXISTS idx_memories_kind ON memories(kind);
       `);
     }
   }
@@ -179,6 +249,18 @@ function mapMemoryWithSource(row: MemoryWithSourceRow): MemoryWithSource {
       source_type: row.source_type,
       created_at: row.source_created_at
     })
+  };
+}
+
+function mapRecallFeedback(row: RecallFeedbackRow): RecallFeedback {
+  return {
+    id: row.id,
+    query: row.query,
+    action: row.action,
+    sourceItemId: row.source_item_id,
+    memoryId: row.memory_id,
+    note: row.note,
+    createdAt: row.created_at
   };
 }
 
@@ -235,13 +317,13 @@ function validateMemoryInput(input: CreateMemoryInput) {
   }
 
   if (input.status && !memoryStatuses.has(input.status)) {
-    throw new Error("Memory status must be active, done, or dismissed.");
+    throw new Error("Memory status must be active, needs_review, done, or dismissed.");
   }
 }
 
 function validateMemoryStatus(status: MemoryStatus) {
   if (!memoryStatuses.has(status)) {
-    throw new Error("Memory status must be active, done, or dismissed.");
+    throw new Error("Memory status must be active, needs_review, done, or dismissed.");
   }
 }
 
@@ -436,4 +518,56 @@ export function listOpenCommitments(limit = 50): MemoryWithSource[] {
     .all(safeLimit) as MemoryWithSourceRow[];
 
   return rows.map(mapMemoryWithSource);
+}
+
+export function createRecallFeedback(input: CreateRecallFeedbackInput): RecallFeedback {
+  const query = input.query.trim();
+  const note = input.note?.trim() || null;
+  if (!query) {
+    throw new Error("Recall feedback requires a query.");
+  }
+
+  if (!recallFeedbackActions.has(input.action)) {
+    throw new Error("Recall feedback requires a valid feedback action.");
+  }
+
+  if (!Number.isInteger(input.sourceItemId) || input.sourceItemId < 1) {
+    throw new Error("Recall feedback requires a valid source item.");
+  }
+
+  if (input.memoryId != null && (!Number.isInteger(input.memoryId) || input.memoryId < 1)) {
+    throw new Error("Recall feedback requires a valid memory id.");
+  }
+
+  const createdAt = new Date().toISOString();
+  const result = getDb()
+    .prepare(`
+      INSERT INTO recall_feedback (query, action, source_item_id, memory_id, note, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `)
+    .run(query, input.action, input.sourceItemId, input.memoryId ?? null, note, createdAt);
+
+  return {
+    id: Number(result.lastInsertRowid),
+    query,
+    action: input.action,
+    sourceItemId: input.sourceItemId,
+    memoryId: input.memoryId ?? null,
+    note,
+    createdAt
+  };
+}
+
+export function listRecallFeedback(limit = 50): RecallFeedback[] {
+  const safeLimit = Math.min(Math.max(limit, 1), 500);
+  const rows = getDb()
+    .prepare(`
+      SELECT id, query, action, source_item_id, memory_id, note, created_at
+      FROM recall_feedback
+      ORDER BY datetime(created_at) DESC, id DESC
+      LIMIT ?
+    `)
+    .all(safeLimit) as RecallFeedbackRow[];
+
+  return rows.map(mapRecallFeedback);
 }

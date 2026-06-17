@@ -80,7 +80,10 @@ test("open-loop status updates validate status and tolerate missing memories", a
     rationale: "The source says Ty needs to send Sarah notes."
   });
 
-  assert.throws(() => dbModule.updateMemoryStatus(memory.id, "paused"), /Memory status must be active, done, or dismissed/);
+  assert.throws(
+    () => dbModule.updateMemoryStatus(memory.id, "paused"),
+    /Memory status must be active, needs_review, done, or dismissed/
+  );
   assert.equal(dbModule.updateCommitmentStatus(9999, "done"), null);
 });
 

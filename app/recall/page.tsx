@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { saveRecallFeedback } from "@/app/recall/actions";
 import { recall } from "@/lib/recall";
 import { formatRecallResultsHeading, getRecallViewState, parseRecallFilters } from "@/lib/recall-view";
 
@@ -12,6 +13,13 @@ const dateFormatter = new Intl.DateTimeFormat("en", {
   dateStyle: "medium",
   timeStyle: "short"
 });
+
+const resultTypeLabels = {
+  memory: "confirmed memory",
+  needs_review: "needs review",
+  raw: "raw source match",
+  raw_fallback: "raw fallback"
+} as const;
 
 export default async function RecallPage({ searchParams }: RecallPageProps) {
   const params = await searchParams;
@@ -55,6 +63,7 @@ export default async function RecallPage({ searchParams }: RecallPageProps) {
           </select>
           <select aria-label="Memory status" className="recall-select" defaultValue={filters.selectedStatus} name="status">
             <option value="active">Active</option>
+            <option value="needs_review">Needs review</option>
             <option value="done">Done</option>
             <option value="dismissed">Dismissed</option>
           </select>
@@ -91,6 +100,15 @@ export default async function RecallPage({ searchParams }: RecallPageProps) {
                   <div className="capture-meta">
                     <span className="badge">{result.memory ? result.memory.kind : "source"}</span>
                     {result.memory ? <span className="badge badge-muted">{result.memory.status}</span> : null}
+                    <span
+                      className={
+                        result.resultType === "needs_review" || result.resultType === "raw_fallback"
+                          ? "badge badge-review"
+                          : "badge badge-muted"
+                      }
+                    >
+                      {resultTypeLabels[result.resultType]}
+                    </span>
                     <span className="badge badge-muted">{result.source.sourceType}</span>
                     <span>Source #{result.source.id}</span>
                     <span>{dateFormatter.format(new Date(result.source.createdAt))}</span>
@@ -109,6 +127,22 @@ export default async function RecallPage({ searchParams }: RecallPageProps) {
                   <div className="source-proof">
                     <p className="memory-list-title">Source proof</p>
                     <p className="capture-content">{result.sourceSnippet}</p>
+                  </div>
+
+                  <div className="recall-feedback-actions" aria-label={`Recall feedback for source ${result.source.id}`}>
+                    {[
+                      ["not_relevant", "Not relevant"],
+                      ["promote_to_memory", "Promote to memory"],
+                      ["add_context", "Add context"]
+                    ].map(([action, label]) => (
+                      <form action={saveRecallFeedback} key={action}>
+                        <input name="query" type="hidden" value={query} />
+                        <input name="action" type="hidden" value={action} />
+                        <input name="sourceItemId" type="hidden" value={result.source.id} />
+                        {result.memory ? <input name="memoryId" type="hidden" value={result.memory.id} /> : null}
+                        <button className="secondary-button" type="submit">{label}</button>
+                      </form>
+                    ))}
                   </div>
                 </article>
               ))}

@@ -13,6 +13,7 @@ export type RecallResult = {
   memory: Memory | null;
   sourceSnippet: string;
   score: number;
+  resultType: "memory" | "needs_review" | "raw" | "raw_fallback";
 };
 
 export type RecallDependencies = {
@@ -43,7 +44,9 @@ const STOP_WORDS = new Set([
   "are",
   "did",
   "do",
+  "doing",
   "for",
+  "floating",
   "from",
   "guy",
   "have",
@@ -58,17 +61,23 @@ const STOP_WORDS = new Set([
   "of",
   "once",
   "on",
+  "not",
   "recently",
+  "said",
+  "say",
   "that",
   "the",
   "to",
   "was",
+  "we",
   "were",
   "what",
   "when",
   "where",
   "who",
-  "with"
+  "why",
+  "with",
+  "yet"
 ]);
 
 function tokenize(value: string): string[] {
@@ -144,6 +153,7 @@ function countSourceMatches(source: SourceItem, queryTokens: string[]): number {
 const GENERIC_RECALL_TOKENS = new Set([
   "ai",
   "business",
+  "captured",
   "commitment",
   "commitments",
   "forgetting",
@@ -152,6 +162,8 @@ const GENERIC_RECALL_TOKENS = new Set([
   "ideas",
   "need",
   "owe",
+  "person",
+  "people",
   "promised",
   "remember"
 ]);
@@ -191,10 +203,14 @@ function normalizeOptions(options: RecallOptions = {}): Required<RecallOptions> 
 
   return {
     kinds,
-    statuses: options.statuses?.length ? [...new Set(options.statuses)] : ["active"],
+    statuses: options.statuses?.length ? [...new Set(options.statuses)] : ["active", "needs_review"],
     sourceTypes: options.sourceTypes?.length ? [...new Set(options.sourceTypes)] : [],
     includeRawSources: options.includeRawSources ?? !options.kinds?.length
   };
+}
+
+function memoryResultType(memory: Memory): RecallResult["resultType"] {
+  return memory.status === "needs_review" || memory.confidence < 88 ? "needs_review" : "memory";
 }
 
 export function recall(
@@ -213,6 +229,7 @@ export function recall(
   const requiredQueryTokens = selectRequiredQueryTokens(queryTokens);
   const sources = dependencies.listRecentSourceItems(RECALL_SOURCE_WINDOW);
   const memoriesBySource = dependencies.listMemoriesForSources(sources.map((source) => source.id));
+  const rawFallbackResults: RecallResult[] = [];
   const results = sources.flatMap<RecallResult>((source) => {
     if (normalizedOptions.sourceTypes.length > 0 && !normalizedOptions.sourceTypes.includes(source.sourceType)) {
       return [];
@@ -237,7 +254,15 @@ export function recall(
       const score = sourceScore + memoryScore * 2;
 
       return score > 0
-        ? [{ source, memory, sourceSnippet: buildSourceSnippet(source.content, [...queryTokens, ...tokenize(memory.content)]), score }]
+        ? [
+            {
+              source,
+              memory,
+              sourceSnippet: buildSourceSnippet(source.content, [...queryTokens, ...tokenize(memory.content)]),
+              score,
+              resultType: memoryResultType(memory)
+            }
+          ]
         : [];
     });
 
@@ -245,13 +270,35 @@ export function recall(
       return memoryResults;
     }
 
-    return normalizedOptions.includeRawSources &&
+    const rawMatches =
       !filteredOutMemoryMatched &&
       sourceScore > 0 &&
-      (requiredQueryTokens.length === 0 || countSourceMatches(source, requiredQueryTokens) > 0)
-      ? [{ source, memory: null, sourceSnippet: buildSourceSnippet(source.content, queryTokens), score: sourceScore }]
-      : [];
+      (requiredQueryTokens.length === 0 || countSourceMatches(source, requiredQueryTokens) > 0);
+
+    if (!rawMatches) {
+      return [];
+    }
+
+    const rawResult: RecallResult = {
+      source,
+      memory: null,
+      sourceSnippet: buildSourceSnippet(source.content, queryTokens),
+      score: sourceScore,
+      resultType: normalizedOptions.includeRawSources ? "raw" : "raw_fallback"
+    };
+
+    if (normalizedOptions.includeRawSources) {
+      return [rawResult];
+    }
+
+    if (inferredKinds) {
+      rawFallbackResults.push(rawResult);
+    }
+
+    return [];
   });
 
-  return results.sort((a, b) => b.score - a.score || b.source.id - a.source.id).slice(0, Math.max(1, limit));
+  const candidateResults = results.length > 0 ? results : rawFallbackResults;
+
+  return candidateResults.sort((a, b) => b.score - a.score || b.source.id - a.source.id).slice(0, Math.max(1, limit));
 }

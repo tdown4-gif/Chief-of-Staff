@@ -21,4 +21,10 @@ test("memory review presenter exposes status labels and safe next actions", asyn
     statusTone: "muted",
     nextAction: { label: "Restore", status: "active" }
   });
+
+  assert.deepEqual(getMemoryReviewState("needs_review"), {
+    statusLabel: "needs_review",
+    statusTone: "review",
+    nextAction: { label: "Confirm", status: "active" }
+  });
 });

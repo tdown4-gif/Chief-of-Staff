@@ -251,3 +251,52 @@ test("memory status migration backfills existing rows as active", async () => {
   assert.equal(loops[0].memory.status, "active");
   assert.equal(loops[0].memory.content, "Follow up with Sarah about pricing");
 });
+
+test("low-confidence memories can be marked needs_review and excluded from open loops", async () => {
+  const { dbModule } = await importDbWithTempPath();
+  const source = dbModule.createSourceItem("Need to maybe call Dad about Medicare forms.", "text");
+  const memory = dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "commitment",
+    content: "Call Dad about Medicare forms",
+    confidence: 84,
+    rationale: "Weak extraction from family reminder language.",
+    status: "needs_review"
+  });
+
+  assert.equal(memory.status, "needs_review");
+  assert.equal(dbModule.listOpenCommitments().length, 0);
+  assert.equal(dbModule.updateMemoryStatus(memory.id, "active").status, "active");
+  assert.equal(dbModule.listOpenCommitments().length, 1);
+});
+
+test("recall feedback records lightweight correction signals", async () => {
+  const { dbModule } = await importDbWithTempPath();
+  const source = dbModule.createSourceItem("Palms AI project: source proof in founder briefs.", "text");
+  const memory = dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "project",
+    content: "Palms AI: source proof in founder briefs",
+    confidence: 86,
+    rationale: "The source uses an explicit project label."
+  });
+
+  const first = dbModule.createRecallFeedback({
+    query: "founder brief source proof",
+    action: "not_relevant",
+    sourceItemId: source.id,
+    memoryId: memory.id,
+    note: "Matched the project but missed the actual brief context."
+  });
+  const second = dbModule.createRecallFeedback({
+    query: "founder brief source proof",
+    action: "add_context",
+    sourceItemId: source.id,
+    note: "Add quotes/facts/assumptions/open loops as context."
+  });
+
+  assert.equal(first.action, "not_relevant");
+  assert.equal(first.memoryId, memory.id);
+  assert.equal(second.action, "add_context");
+  assert.equal(dbModule.listRecallFeedback().length, 2);
+});

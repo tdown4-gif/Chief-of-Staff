@@ -25,6 +25,6 @@ test("recall view parses kind status and source-type filters from query params",
     selectedKind: "all",
     selectedStatus: "active",
     selectedSourceType: "all",
-    options: { statuses: ["active"] }
+    options: { statuses: ["active", "needs_review"] }
   });
 });

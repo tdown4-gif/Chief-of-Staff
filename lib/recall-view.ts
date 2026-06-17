@@ -3,7 +3,7 @@ import type { RecallOptions } from "./recall.ts";
 
 export type RecallViewState = "idle" | "results" | "no-results";
 export type RecallKindFilter = "all" | "person" | "project" | "idea" | "commitment";
-export type RecallStatusFilter = "active" | "done" | "dismissed";
+export type RecallStatusFilter = "active" | "needs_review" | "done" | "dismissed";
 export type RecallSourceTypeFilter = "all" | CaptureSourceType;
 
 type RecallFilterParams = {
@@ -13,7 +13,7 @@ type RecallFilterParams = {
 };
 
 const recallKinds = new Set<RecallKindFilter>(["all", "person", "project", "idea", "commitment"]);
-const recallStatuses = new Set<RecallStatusFilter>(["active", "done", "dismissed"]);
+const recallStatuses = new Set<RecallStatusFilter>(["active", "needs_review", "done", "dismissed"]);
 const recallSourceTypes = new Set<RecallSourceTypeFilter>(["all", ...SOURCE_TYPES]);
 
 export function getRecallViewState(query: string, resultCount: number): RecallViewState {
@@ -52,7 +52,7 @@ export function parseRecallFilters(params: RecallFilterParams): {
     options: {
       ...(selectedKind === "all" ? {} : { kinds: [selectedKind] }),
       ...(selectedSourceType === "all" ? {} : { sourceTypes: [selectedSourceType] }),
-      statuses: [selectedStatus]
+      statuses: selectedStatus === "active" ? ["active", "needs_review"] : [selectedStatus]
     }
   };
 }

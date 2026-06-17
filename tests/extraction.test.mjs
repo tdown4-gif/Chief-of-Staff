@@ -149,3 +149,35 @@ test("extraction stores source-backed memories and isolates extractor failures",
   assert.equal(failure.error, "extractor unavailable");
   assert.equal(dbModule.listMemoriesForSource(source.id).length, 1);
 });
+
+test("extraction marks low-confidence or weak memory drafts as needs_review", async () => {
+  const dbModule = await importWithTempDb("../lib/db.ts");
+  const extractionModule = await import("../lib/extraction.ts");
+  const source = dbModule.createSourceItem("Met Mike. Insurance agency owner.", "text");
+
+  const result = await extractionModule.extractAndStoreMemoriesForSource(source, {
+    extract: () => [
+      {
+        kind: "person",
+        content: "Mike",
+        confidence: 84,
+        rationale: "The source says Ty met Mike."
+      },
+      {
+        kind: "commitment",
+        content: "Follow up with Mike",
+        confidence: 92,
+        rationale: "The source says Ty needs to follow up with Mike."
+      }
+    ]
+  });
+
+  assert.equal(result.error, null);
+  assert.deepEqual(
+    result.memories.map((memory) => ({ kind: memory.kind, status: memory.status })),
+    [
+      { kind: "person", status: "needs_review" },
+      { kind: "commitment", status: "active" }
+    ]
+  );
+});

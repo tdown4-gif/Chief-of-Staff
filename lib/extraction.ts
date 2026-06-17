@@ -345,6 +345,10 @@ function normalizeDraft(draft: MemoryDraft): MemoryDraft | null {
   };
 }
 
+function statusForDraft(draft: MemoryDraft): "active" | "needs_review" {
+  return draft.confidence < 88 ? "needs_review" : "active";
+}
+
 export async function extractAndStoreMemoriesForSource(
   source: SourceItem,
   extractor: MemoryExtractor = createDefaultExtractor()
@@ -364,7 +368,8 @@ export async function extractAndStoreMemoriesForSource(
           content: normalizedDraft.content,
           confidence: normalizedDraft.confidence,
           rationale: normalizedDraft.rationale,
-          metadataJson: normalizedDraft.metadata ? JSON.stringify(normalizedDraft.metadata) : null
+          metadataJson: normalizedDraft.metadata ? JSON.stringify(normalizedDraft.metadata) : null,
+          status: statusForDraft(normalizedDraft)
         }
       ];
     });
