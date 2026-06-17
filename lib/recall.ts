@@ -108,6 +108,10 @@ function countMatches(text: string, queryTokens: string[]): number {
   );
 }
 
+function countSourceMatches(source: SourceItem, queryTokens: string[]): number {
+  return countMatches(`${source.sourceType} ${source.content}`, queryTokens);
+}
+
 function buildSourceSnippet(sourceContent: string, queryTokens: string[], maxLength = 220): string {
   const normalized = sourceContent.replace(/\s+/g, " ").trim();
   if (normalized.length <= maxLength) {
@@ -156,7 +160,7 @@ export function recall(
   const memoriesBySource = dependencies.listMemoriesForSources(sources.map((source) => source.id));
   const results = sources.flatMap<RecallResult>((source) => {
     const memories = memoriesBySource[source.id] ?? [];
-    const sourceScore = countMatches(source.content, queryTokens);
+    const sourceScore = countSourceMatches(source, queryTokens);
     let filteredOutMemoryMatched = false;
     const memoryResults = memories.flatMap<RecallResult>((memory) => {
       const memoryText = `${memory.kind} ${memory.content} ${memory.rationale}`;

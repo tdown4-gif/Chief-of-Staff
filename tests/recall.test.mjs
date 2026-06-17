@@ -49,6 +49,19 @@ test("recall searches raw captures even when no memory has been extracted", asyn
   assert.match(results[0].sourceSnippet, /venture briefs/);
 });
 
+test("recall can match source type when asking for links or documents", async () => {
+  const dbModule = await importWithTempDb("../lib/db.ts");
+  const { recall } = await import("../lib/recall.ts");
+  const linkSource = dbModule.createSourceItem("Renewal workflow reference: https://example.com/renewals", "link");
+  dbModule.createSourceItem("Renewal workflow summary copied from a call.", "note");
+
+  const results = recall("links about renewal workflow");
+
+  assert.ok(results.length >= 1);
+  assert.equal(results[0].source.id, linkSource.id);
+  assert.equal(results[0].source.sourceType, "link");
+});
+
 test("recall handles plural memory-kind queries and centers source snippets on evidence", async () => {
   const dbModule = await importWithTempDb("../lib/db.ts");
   const { recall } = await import("../lib/recall.ts");
