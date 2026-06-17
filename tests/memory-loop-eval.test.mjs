@@ -18,7 +18,7 @@ async function importLoopWithTempDb() {
   const cacheBuster = `${Date.now()}-${Math.random()}`;
   process.env.DATABASE_URL = `file:${path.join(dir, "test.db")}`;
 
-  const dbModule = await import(`../lib/db.ts?db=${cacheBuster}`);
+  const dbModule = await import(`../lib/db-local.ts?db=${cacheBuster}`);
   const extractionModule = await import(`../lib/extraction.ts?db=${cacheBuster}`);
   const recallModule = await import(`../lib/recall.ts?db=${cacheBuster}`);
 
@@ -39,7 +39,7 @@ test("seeded capture extraction recall and open-loops loop stays source-backed",
   );
 
   const loops = dbModule.listOpenCommitments();
-  const summary = evaluateMemoryLoopFixture({
+  const summary = await evaluateMemoryLoopFixture({
     cases: memoryLoopCases,
     sources,
     memories,

@@ -86,9 +86,9 @@ export async function seedHoldoutDataset({ dbModule, extractionModule }) {
   };
 }
 
-export function evaluateHoldoutRecall({ recall }) {
-  const queryReports = holdoutQueries.map((query) => {
-    const results = recall(query.question, 10);
+export async function evaluateHoldoutRecall({ recall }) {
+  const queryReports = await Promise.all(holdoutQueries.map(async (query) => {
+    const results = await recall(query.question, 10);
     const missing = query.expectedNeedles.filter((needle) => !results.some((result) => includesAny(resultText(result), [needle])));
     const falsePositives = results
       .filter((result) => !includesAny(resultText(result), query.allowedNeedles))
@@ -115,7 +115,7 @@ export function evaluateHoldoutRecall({ recall }) {
         sourceSnippet: result.sourceSnippet
       }))
     };
-  });
+  }));
 
   return {
     noteCount: holdoutNotes.length,

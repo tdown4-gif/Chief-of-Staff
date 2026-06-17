@@ -558,19 +558,49 @@ export function listRecallFeedback(limit = 50): RecallFeedback[] {
 }
 
 export const localSqliteDatabase: MemoryDatabase = {
-  createSourceItem,
-  listRecentSourceItems,
-  countSourceItems,
-  createMemory,
-  createMemories,
-  listMemoriesForSource,
-  listMemoriesForSources,
-  updateMemoryStatus,
-  updateMemoryContent,
-  deleteMemory,
-  updateCommitmentStatus,
-  listOpenCommitments,
-  listMemoriesNeedingReview,
-  createRecallFeedback,
-  listRecallFeedback
+  async createSourceItem(content, sourceType) {
+    return createSourceItem(content, sourceType);
+  },
+  async listRecentSourceItems(limit) {
+    return listRecentSourceItems(limit);
+  },
+  async countSourceItems() {
+    return countSourceItems();
+  },
+  async createMemory(input) {
+    return createMemory(input);
+  },
+  async createMemories(inputs) {
+    return createMemories(inputs);
+  },
+  async listMemoriesForSource(sourceItemId) {
+    return listMemoriesForSource(sourceItemId);
+  },
+  async listMemoriesForSources(sourceItemIds) {
+    return listMemoriesForSources(sourceItemIds);
+  },
+  async updateMemoryStatus(memoryId, status) {
+    return updateMemoryStatus(memoryId, status);
+  },
+  async updateMemoryContent(memoryId, content) {
+    return updateMemoryContent(memoryId, content);
+  },
+  async deleteMemory(memoryId) {
+    return deleteMemory(memoryId);
+  },
+  async updateCommitmentStatus(memoryId, status) {
+    return updateCommitmentStatus(memoryId, status);
+  },
+  async listOpenCommitments(limit) {
+    return listOpenCommitments(limit);
+  },
+  async listMemoriesNeedingReview(limit) {
+    return listMemoriesNeedingReview(limit);
+  },
+  async createRecallFeedback(input) {
+    return createRecallFeedback(input);
+  },
+  async listRecallFeedback(limit) {
+    return listRecallFeedback(limit);
+  }
 };

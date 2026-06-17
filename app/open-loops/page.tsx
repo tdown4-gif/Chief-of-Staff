@@ -19,8 +19,8 @@ function buildSourceSnippet(sourceContent: string, maxLength = 240): string {
   return `${normalized.slice(0, maxLength)}...`;
 }
 
-export default function OpenLoopsPage() {
-  const loops = listOpenCommitments(50);
+export default async function OpenLoopsPage() {
+  const loops = await listOpenCommitments(50);
 
   return (
     <main className="shell">

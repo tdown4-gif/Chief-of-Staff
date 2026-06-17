@@ -14,10 +14,12 @@ function snippet(content: string, maxLength = 150): string {
   return normalized.length <= maxLength ? normalized : `${normalized.slice(0, maxLength)}...`;
 }
 
-export default function Home() {
-  const recentCaptures = listRecentSourceItems(5);
-  const openLoops = listOpenCommitments(5);
-  const memoriesNeedingReview = listMemoriesNeedingReview(5);
+export default async function Home() {
+  const [recentCaptures, openLoops, memoriesNeedingReview] = await Promise.all([
+    listRecentSourceItems(5),
+    listOpenCommitments(5),
+    listMemoriesNeedingReview(5)
+  ]);
 
   return (
     <main className="shell daily-shell">

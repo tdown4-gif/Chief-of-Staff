@@ -9,7 +9,7 @@ async function importDbWithTempPath() {
   const dir = mkdtempSync(path.join(tmpdir(), "chief-of-staff-memory-test-"));
   const dbPath = path.join(dir, "test.db");
   process.env.DATABASE_URL = `file:${dbPath}`;
-  const dbModule = await import(`../lib/db.ts?db=${Date.now()}-${Math.random()}`);
+  const dbModule = await import(`../lib/db-local.ts?db=${Date.now()}-${Math.random()}`);
   return { dbPath, dbModule };
 }
 
@@ -242,7 +242,7 @@ test("memory status migration backfills existing rows as active", async () => {
   database.close();
 
   process.env.DATABASE_URL = `file:${dbPath}`;
-  const dbModule = await import(`../lib/db.ts?db=${Date.now()}-${Math.random()}`);
+  const dbModule = await import(`../lib/db-local.ts?db=${Date.now()}-${Math.random()}`);
   const loops = dbModule.listOpenCommitments();
   const columns = new Database(dbPath).prepare("PRAGMA table_info(memories)").all().map((row) => row.name);
 

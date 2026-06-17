@@ -11,7 +11,7 @@ async function importWithTempDb(modulePath) {
 }
 
 test("open loops list active commitments with source proof and confidence", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const source = dbModule.createSourceItem(
     "Need to follow up with Sarah about pricing after the demo.",
     "text"
@@ -44,7 +44,7 @@ test("open loops list active commitments with source proof and confidence", asyn
 });
 
 test("done and dismissed commitments are removed from open loops", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const doneSource = dbModule.createSourceItem("Need to send Sarah the pricing notes.", "text");
   const dismissedSource = dbModule.createSourceItem("Need to revisit an old maybe someday idea.", "text");
 
@@ -70,7 +70,7 @@ test("done and dismissed commitments are removed from open loops", async () => {
 });
 
 test("open-loop status updates validate status and tolerate missing memories", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const source = dbModule.createSourceItem("Need to send Sarah the pricing notes.", "text");
   const memory = dbModule.createMemory({
     sourceItemId: source.id,
@@ -88,7 +88,7 @@ test("open-loop status updates validate status and tolerate missing memories", a
 });
 
 test("open-loop actions only update commitment memories", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const source = dbModule.createSourceItem("Idea: better recall snippets.", "text");
   const idea = dbModule.createMemory({
     sourceItemId: source.id,

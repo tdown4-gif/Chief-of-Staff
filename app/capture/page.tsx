@@ -11,8 +11,8 @@ type CapturePageProps = {
 
 export default async function CapturePage({ searchParams }: CapturePageProps) {
   const params = await searchParams;
-  const recentCaptures = listRecentSourceItems(5);
-  const memoriesBySource = listMemoriesForSources(recentCaptures.map((item) => item.id));
+  const recentCaptures = await listRecentSourceItems(5);
+  const memoriesBySource = await listMemoriesForSources(recentCaptures.map((item) => item.id));
   const error = params.error === "too-long"
     ? "That capture is unusually large. Keep it under 100,000 characters."
     : params.error === "empty"

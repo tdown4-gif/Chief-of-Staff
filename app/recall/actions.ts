@@ -28,7 +28,7 @@ export async function saveRecallFeedback(formData: Pick<FormData, "get">): Promi
     throw new Error("Recall feedback requires a valid feedback action.");
   }
 
-  createRecallFeedback({
+  await createRecallFeedback({
     query: rawQuery,
     action: rawAction as RecallFeedbackAction,
     sourceItemId: readPositiveInt(formData, "sourceItemId"),

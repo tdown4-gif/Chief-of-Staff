@@ -1,3 +1,4 @@
+import { libsqlDatabase } from "./db-libsql.ts";
 import { localSqliteDatabase } from "./db-local.ts";
 import type {
   CreateMemoryInput,
@@ -21,10 +22,18 @@ export type {
 } from "./db-types.ts";
 
 function getDatabase(): MemoryDatabase {
+  if (process.env.TURSO_DATABASE_URL?.trim() && process.env.TURSO_AUTH_TOKEN?.trim()) {
+    return libsqlDatabase;
+  }
+
   return localSqliteDatabase;
 }
 
-export function getDatabaseAdapterKind(): "local-sqlite" {
+export function getDatabaseAdapterKind(): "local-sqlite" | "libsql" {
+  if (process.env.TURSO_DATABASE_URL?.trim() && process.env.TURSO_AUTH_TOKEN?.trim()) {
+    return "libsql";
+  }
+
   return "local-sqlite";
 }
 

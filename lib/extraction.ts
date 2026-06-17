@@ -373,7 +373,7 @@ export async function extractAndStoreMemoriesForSource(
         }
       ];
     });
-    const memories = createMemories(memoryInputs);
+    const memories = await createMemories(memoryInputs);
 
     return { memories, error: null };
   } catch (error) {

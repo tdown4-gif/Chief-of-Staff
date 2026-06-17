@@ -6,9 +6,11 @@ export const dynamic = "force-dynamic";
 
 export default async function InboxPage({ searchParams }: { searchParams: Promise<{ captured?: string; memoryUpdated?: string }> }) {
   const params = await searchParams;
-  const items = listRecentSourceItems(30);
-  const memoriesBySource = listMemoriesForSources(items.map((item) => item.id));
-  const total = countSourceItems();
+  const items = await listRecentSourceItems(30);
+  const [memoriesBySource, total] = await Promise.all([
+    listMemoriesForSources(items.map((item) => item.id)),
+    countSourceItems()
+  ]);
 
   return (
     <main className="shell">

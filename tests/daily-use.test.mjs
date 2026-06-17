@@ -17,7 +17,7 @@ test("capture success returns to capture so the PWA is ready for the next note",
 });
 
 test("daily-use dashboard queries the memory surfaces Ty needs to check", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const capture = dbModule.createSourceItem("Met Sarah. Need to send pricing after demo.", "text");
   const reviewSource = dbModule.createSourceItem("Maybe John from the thing is connected to Palms AI?", "text");
 

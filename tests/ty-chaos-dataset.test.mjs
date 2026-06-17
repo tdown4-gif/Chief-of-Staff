@@ -10,7 +10,7 @@ async function importChaosWithTempDb() {
   const cacheBuster = `${Date.now()}-${Math.random()}`;
   process.env.DATABASE_URL = `file:${path.join(dir, "chaos.db")}`;
 
-  const dbModule = await import(`../lib/db.ts?chaos=${cacheBuster}`);
+  const dbModule = await import(`../lib/db-local.ts?chaos=${cacheBuster}`);
   const extractionModule = await import(`../lib/extraction.ts?chaos=${cacheBuster}`);
   const recallModule = await import(`../lib/recall.ts?chaos=${cacheBuster}`);
 
@@ -20,7 +20,7 @@ async function importChaosWithTempDb() {
 test("Ty Chaos Dataset seeds 100 messy notes and reports retrieval failure categories", async () => {
   const { dbModule, extractionModule, recallModule } = await importChaosWithTempDb();
   const seeded = await seedTyChaosDataset({ dbModule, extractionModule });
-  const report = evaluateTyChaosRecall({ recall: recallModule.recall, memories: seeded.memories });
+  const report = await evaluateTyChaosRecall({ recall: recallModule.recall, memories: seeded.memories });
 
   assert.equal(tyChaosNotes.length, 100);
   assert.equal(seeded.sources.length, 100);

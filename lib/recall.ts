@@ -17,8 +17,8 @@ export type RecallResult = {
 };
 
 export type RecallDependencies = {
-  listRecentSourceItems: (limit?: number) => SourceItem[];
-  listMemoriesForSources: (sourceItemIds: number[]) => MemoriesBySourceId;
+  listRecentSourceItems: (limit?: number) => Promise<SourceItem[]> | SourceItem[];
+  listMemoriesForSources: (sourceItemIds: number[]) => Promise<MemoriesBySourceId> | MemoriesBySourceId;
 };
 
 export type RecallOptions = {
@@ -213,12 +213,12 @@ function memoryResultType(memory: Memory): RecallResult["resultType"] {
   return memory.status === "needs_review" || memory.confidence < 88 ? "needs_review" : "memory";
 }
 
-export function recall(
+export async function recall(
   question: string,
   limit = 10,
   dependencies: RecallDependencies = defaultRecallDependencies,
   options: RecallOptions = {}
-): RecallResult[] {
+): Promise<RecallResult[]> {
   const queryTokens = Array.from(new Set(expandQueryTokens(question)));
   if (queryTokens.length === 0) {
     return [];
@@ -227,8 +227,8 @@ export function recall(
   const inferredKinds = options.kinds?.length ? null : inferMemoryKinds(question);
   const normalizedOptions = normalizeOptions(inferredKinds ? { ...options, kinds: inferredKinds } : options);
   const requiredQueryTokens = selectRequiredQueryTokens(queryTokens);
-  const sources = dependencies.listRecentSourceItems(RECALL_SOURCE_WINDOW);
-  const memoriesBySource = dependencies.listMemoriesForSources(sources.map((source) => source.id));
+  const sources = await dependencies.listRecentSourceItems(RECALL_SOURCE_WINDOW);
+  const memoriesBySource = await dependencies.listMemoriesForSources(sources.map((source) => source.id));
   const rawFallbackResults: RecallResult[] = [];
   const results = sources.flatMap<RecallResult>((source) => {
     if (normalizedOptions.sourceTypes.length > 0 && !normalizedOptions.sourceTypes.includes(source.sourceType)) {

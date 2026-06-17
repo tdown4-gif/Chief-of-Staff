@@ -11,7 +11,7 @@ async function importWithTempDb(modulePath) {
 }
 
 test("recall finds a memory through matching source context and returns source proof", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const { recall } = await import("../lib/recall.ts");
   const source = dbModule.createSourceItem("Met Mike. Insurance agency owner. Interested in AI workflows.", "text");
 
@@ -23,7 +23,7 @@ test("recall finds a memory through matching source context and returns source p
     rationale: "The source says Ty met Mike."
   });
 
-  const results = recall("Who was the insurance guy?");
+  const results = await recall("Who was the insurance guy?");
 
   assert.equal(results.length, 1);
   assert.equal(results[0].source.id, source.id);
@@ -34,14 +34,14 @@ test("recall finds a memory through matching source context and returns source p
 });
 
 test("recall searches raw captures even when no memory has been extracted", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const { recall } = await import("../lib/recall.ts");
   const source = dbModule.createSourceItem(
     "Palms AI idea: turn messy founder notes into structured venture briefs.",
     "text"
   );
 
-  const results = recall("venture briefs");
+  const results = await recall("venture briefs");
 
   assert.equal(results.length, 1);
   assert.equal(results[0].source.id, source.id);
@@ -50,11 +50,11 @@ test("recall searches raw captures even when no memory has been extracted", asyn
 });
 
 test("recall includes raw source fallback when structured memory results are empty for an inferred kind", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const { recall } = await import("../lib/recall.ts");
   const source = dbModule.createSourceItem("Family reminder: Dad Medicare letter follow up. ask if he mailed forms.", "text");
 
-  const results = recall("What do I owe my dad about Medicare?");
+  const results = await recall("What do I owe my dad about Medicare?");
 
   assert.equal(results.length, 1);
   assert.equal(results[0].source.id, source.id);
@@ -64,7 +64,7 @@ test("recall includes raw source fallback when structured memory results are emp
 });
 
 test("recall labels low-confidence memory matches as review-needed", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const { recall } = await import("../lib/recall.ts");
   const source = dbModule.createSourceItem("Met Mike. Insurance agency owner.", "text");
 
@@ -77,7 +77,7 @@ test("recall labels low-confidence memory matches as review-needed", async () =>
     status: "needs_review"
   });
 
-  const results = recall("Who was insurance Mike?");
+  const results = await recall("Who was insurance Mike?");
 
   assert.equal(results.length, 1);
   assert.equal(results[0].resultType, "needs_review");
@@ -85,12 +85,12 @@ test("recall labels low-confidence memory matches as review-needed", async () =>
 });
 
 test("recall can match source type when asking for links or documents", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const { recall } = await import("../lib/recall.ts");
   const linkSource = dbModule.createSourceItem("Renewal workflow reference: https://example.com/renewals", "link");
   dbModule.createSourceItem("Renewal workflow summary copied from a call.", "note");
 
-  const results = recall("links about renewal workflow");
+  const results = await recall("links about renewal workflow");
 
   assert.ok(results.length >= 1);
   assert.equal(results[0].source.id, linkSource.id);
@@ -98,12 +98,12 @@ test("recall can match source type when asking for links or documents", async ()
 });
 
 test("recall can filter results to requested source types", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const { recall } = await import("../lib/recall.ts");
   const linkSource = dbModule.createSourceItem("Renewal workflow reference: https://example.com/renewals", "link");
   dbModule.createSourceItem("Renewal workflow summary copied from a call.", "note");
 
-  const results = recall("renewal workflow", 10, undefined, { sourceTypes: ["link"] });
+  const results = await recall("renewal workflow", 10, undefined, { sourceTypes: ["link"] });
 
   assert.equal(results.length, 1);
   assert.equal(results[0].source.id, linkSource.id);
@@ -111,7 +111,7 @@ test("recall can filter results to requested source types", async () => {
 });
 
 test("recall handles plural memory-kind queries and centers source snippets on evidence", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const { recall } = await import("../lib/recall.ts");
   const filler = "Background note. ".repeat(30);
   const source = dbModule.createSourceItem(
@@ -127,7 +127,7 @@ test("recall handles plural memory-kind queries and centers source snippets on e
     rationale: "The source says Ty needs to follow up with Sarah."
   });
 
-  const results = recall("What commitments have I made recently?");
+  const results = await recall("What commitments have I made recently?");
 
   assert.equal(results.length, 1);
   assert.equal(results[0].memory?.kind, "commitment");
@@ -136,7 +136,7 @@ test("recall handles plural memory-kind queries and centers source snippets on e
 });
 
 test("recall treats forgetting questions as active commitment recall", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const { recall } = await import("../lib/recall.ts");
   const source = dbModule.createSourceItem("Need to follow up with Sarah about pricing after the demo.", "text");
 
@@ -148,7 +148,7 @@ test("recall treats forgetting questions as active commitment recall", async () 
     rationale: "The source says Ty needs to follow up with Sarah."
   });
 
-  const results = recall("What am I forgetting?");
+  const results = await recall("What am I forgetting?");
 
   assert.equal(results.length, 1);
   assert.equal(results[0].memory?.kind, "commitment");
@@ -156,7 +156,7 @@ test("recall treats forgetting questions as active commitment recall", async () 
 });
 
 test("forgetting recall still excludes dismissed commitments by default", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const { recall } = await import("../lib/recall.ts");
   const source = dbModule.createSourceItem("Need to send Sarah the pricing notes.", "text");
   const memory = dbModule.createMemory({
@@ -169,7 +169,7 @@ test("forgetting recall still excludes dismissed commitments by default", async 
 
   dbModule.updateMemoryStatus(memory.id, "dismissed");
 
-  assert.deepEqual(recall("What am I forgetting?"), []);
+  assert.deepEqual(await recall("What am I forgetting?"), []);
 });
 
 test("recall fetches memories for recent sources in one batch", async () => {
@@ -202,7 +202,7 @@ test("recall fetches memories for recent sources in one batch", async () => {
   };
   let requestedSourceIds = [];
 
-  const results = recall("insurance", 10, {
+  const results = await recall("insurance", 10, {
     listRecentSourceItems: () => sources,
     listMemoriesForSources: (sourceIds) => {
       requestedSourceIds = sourceIds;
@@ -221,7 +221,7 @@ test("recall scans a thousand recent captures by default", async () => {
   const createdAt = "2026-06-16T12:00:00.000Z";
   let requestedLimit = 0;
 
-  const results = recall("deep archive", 10, {
+  const results = await recall("deep archive", 10, {
     listRecentSourceItems: (limit) => {
       requestedLimit = limit ?? 0;
       return [
@@ -242,7 +242,7 @@ test("recall scans a thousand recent captures by default", async () => {
 });
 
 test("recall can recover source matches beyond the first hundred captures", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const { recall } = await import("../lib/recall.ts");
 
   dbModule.createSourceItem("Needle note: Zenith renewal workflow belongs in the trusted memory layer.", "text");
@@ -250,14 +250,14 @@ test("recall can recover source matches beyond the first hundred captures", asyn
     dbModule.createSourceItem(`Routine capture ${index}. Nothing about the target phrase.`, "text");
   }
 
-  const results = recall("Zenith renewal workflow");
+  const results = await recall("Zenith renewal workflow");
 
   assert.equal(results.length, 1);
   assert.match(results[0].sourceSnippet, /Zenith renewal workflow/);
 });
 
 test("recall does not surface dismissed memories by default", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const { recall } = await import("../lib/recall.ts");
   const source = dbModule.createSourceItem("Need to follow up with Sarah about pricing after the demo.", "text");
   const memory = dbModule.createMemory({
@@ -270,13 +270,13 @@ test("recall does not surface dismissed memories by default", async () => {
 
   dbModule.updateMemoryStatus(memory.id, "dismissed");
 
-  const results = recall("What commitments mention Sarah?");
+  const results = await recall("What commitments mention Sarah?");
 
   assert.equal(results.length, 0);
 });
 
 test("recall can include non-active memory statuses when explicitly requested", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const { recall } = await import("../lib/recall.ts");
   const source = dbModule.createSourceItem("Need to send Sarah the pricing notes.", "text");
   const memory = dbModule.createMemory({
@@ -289,8 +289,8 @@ test("recall can include non-active memory statuses when explicitly requested", 
 
   dbModule.updateMemoryStatus(memory.id, "done");
 
-  const defaultResults = recall("Sarah pricing");
-  const doneResults = recall("Sarah pricing", 10, undefined, { statuses: ["done"] });
+  const defaultResults = await recall("Sarah pricing");
+  const doneResults = await recall("Sarah pricing", 10, undefined, { statuses: ["done"] });
 
   assert.equal(defaultResults.length, 0);
   assert.equal(doneResults.length, 1);
@@ -298,7 +298,7 @@ test("recall can include non-active memory statuses when explicitly requested", 
 });
 
 test("recall can filter results to requested memory kinds", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const { recall } = await import("../lib/recall.ts");
   const source = dbModule.createSourceItem(
     "Met Sarah. Sarah project: tighten source-backed recall. Need to follow up with Sarah about pricing.",
@@ -327,7 +327,7 @@ test("recall can filter results to requested memory kinds", async () => {
     rationale: "The source says Ty needs to follow up with Sarah."
   });
 
-  const results = recall("Sarah", 10, undefined, { kinds: ["project"] });
+  const results = await recall("Sarah", 10, undefined, { kinds: ["project"] });
 
   assert.equal(results.length, 1);
   assert.equal(results[0].memory?.kind, "project");

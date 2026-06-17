@@ -111,7 +111,7 @@ test("deterministic fallback ignores benign source text", async () => {
 });
 
 test("extraction stores source-backed memories and isolates extractor failures", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const extractionModule = await import("../lib/extraction.ts");
   const source = dbModule.createSourceItem(
     "Need to follow up with Sarah about pricing after the demo on July 12, 2026.",
@@ -151,7 +151,7 @@ test("extraction stores source-backed memories and isolates extractor failures",
 });
 
 test("extraction marks low-confidence or weak memory drafts as needs_review", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const extractionModule = await import("../lib/extraction.ts");
   const source = dbModule.createSourceItem("Met Mike. Insurance agency owner.", "text");
 

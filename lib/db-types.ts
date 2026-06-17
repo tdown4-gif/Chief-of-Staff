@@ -57,19 +57,19 @@ export type CreateRecallFeedbackInput = {
 };
 
 export type MemoryDatabase = {
-  createSourceItem(content: string, sourceType?: string): SourceItem;
-  listRecentSourceItems(limit?: number): SourceItem[];
-  countSourceItems(): number;
-  createMemory(input: CreateMemoryInput): Memory;
-  createMemories(inputs: CreateMemoryInput[]): Memory[];
-  listMemoriesForSource(sourceItemId: number): Memory[];
-  listMemoriesForSources(sourceItemIds: number[]): MemoriesBySourceId;
-  updateMemoryStatus(memoryId: number, status: MemoryStatus): Memory;
-  updateMemoryContent(memoryId: number, content: string): Memory;
-  deleteMemory(memoryId: number): boolean;
-  updateCommitmentStatus(memoryId: number, status: MemoryStatus): Memory | null;
-  listOpenCommitments(limit?: number): MemoryWithSource[];
-  listMemoriesNeedingReview(limit?: number): MemoryWithSource[];
-  createRecallFeedback(input: CreateRecallFeedbackInput): RecallFeedback;
-  listRecallFeedback(limit?: number): RecallFeedback[];
+  createSourceItem(content: string, sourceType?: string): Promise<SourceItem>;
+  listRecentSourceItems(limit?: number): Promise<SourceItem[]>;
+  countSourceItems(): Promise<number>;
+  createMemory(input: CreateMemoryInput): Promise<Memory>;
+  createMemories(inputs: CreateMemoryInput[]): Promise<Memory[]>;
+  listMemoriesForSource(sourceItemId: number): Promise<Memory[]>;
+  listMemoriesForSources(sourceItemIds: number[]): Promise<MemoriesBySourceId>;
+  updateMemoryStatus(memoryId: number, status: MemoryStatus): Promise<Memory>;
+  updateMemoryContent(memoryId: number, content: string): Promise<Memory>;
+  deleteMemory(memoryId: number): Promise<boolean>;
+  updateCommitmentStatus(memoryId: number, status: MemoryStatus): Promise<Memory | null>;
+  listOpenCommitments(limit?: number): Promise<MemoryWithSource[]>;
+  listMemoriesNeedingReview(limit?: number): Promise<MemoryWithSource[]>;
+  createRecallFeedback(input: CreateRecallFeedbackInput): Promise<RecallFeedback>;
+  listRecallFeedback(limit?: number): Promise<RecallFeedback[]>;
 };

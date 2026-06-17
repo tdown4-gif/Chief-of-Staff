@@ -241,7 +241,7 @@ export async function seedTyChaosDataset({ dbModule, extractionModule }) {
   };
 }
 
-export function evaluateTyChaosRecall({ recall, memories }) {
+export async function evaluateTyChaosRecall({ recall, memories }) {
   const weakConfidenceScores = memories
     .filter((memory) => memory.confidence < 88)
     .map((memory) => ({
@@ -253,8 +253,8 @@ export function evaluateTyChaosRecall({ recall, memories }) {
       content: memory.content
     }));
 
-  const queryReports = tyChaosQueries.map((query) => {
-    const results = recall(query.question, 10);
+  const queryReports = await Promise.all(tyChaosQueries.map(async (query) => {
+    const results = await recall(query.question, 10);
     const missing = query.expectedNeedles.filter((needle) => !results.some((result) => includesAny(resultText(result), [needle])));
     const falsePositives = results
       .filter((result) => !includesAny(resultText(result), query.allowedNeedles))
@@ -285,7 +285,7 @@ export function evaluateTyChaosRecall({ recall, memories }) {
         sourceSnippet: result.sourceSnippet
       }))
     };
-  });
+  }));
 
   return {
     noteCount: tyChaosNotes.length,

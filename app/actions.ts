@@ -19,7 +19,7 @@ export async function saveCapture(formData: FormData): Promise<void> {
     redirect(`/capture?error=${validation.error}`);
   }
 
-  const source = createSourceItem(content, "text");
+  const source = await createSourceItem(content, "text");
   const { error } = await extractAndStoreMemoriesForSource(source);
   if (error) {
     console.error("extraction failed for source", source.id, error);

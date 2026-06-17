@@ -124,9 +124,9 @@ export async function seedDogfoodNotes({ dbModule, extractionModule }) {
   };
 }
 
-export function evaluateDogfoodRecall({ recall }) {
-  const queryReports = dogfoodQueries.map((query) => {
-    const results = recall(query.question, 10);
+export async function evaluateDogfoodRecall({ recall }) {
+  const queryReports = await Promise.all(dogfoodQueries.map(async (query) => {
+    const results = await recall(query.question, 10);
     const missing = query.expectedNeedles.filter((needle) => !results.some((result) => includesAny(resultText(result), [needle])));
     const falsePositives = results
       .filter((result) => !includesAny(resultText(result), query.allowedNeedles))
@@ -150,7 +150,7 @@ export function evaluateDogfoodRecall({ recall }) {
         sourceSnippet: result.sourceSnippet
       }))
     };
-  });
+  }));
 
   return {
     noteCount: dogfoodNotes.length,

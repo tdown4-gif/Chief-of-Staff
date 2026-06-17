@@ -11,7 +11,7 @@ async function importWithTempDb(modulePath) {
 }
 
 test("recall feedback actions persist not relevant promote and add context signals", async () => {
-  const dbModule = await importWithTempDb("../lib/db.ts");
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
   const actions = await import("../app/recall/actions.ts");
   const source = dbModule.createSourceItem("Family reminder: Dad Medicare letter follow up. ask if he mailed forms.", "text");
 

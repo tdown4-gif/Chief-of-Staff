@@ -11,7 +11,7 @@ async function importWithTempDb(modulePath) {
 }
 
 test("source items preserve raw content exactly while rejecting blank captures", async () => {
-  const { createSourceItem } = await importWithTempDb("../lib/db.ts");
+  const { createSourceItem } = await importWithTempDb("../lib/db-local.ts");
   const raw = "\n  Met Mike. Insurance agency owner.  \n";
 
   const item = createSourceItem(raw);
@@ -42,7 +42,7 @@ test("capture source types are constrained to a small v0 set", async () => {
 });
 
 test("source listing supports a thousand-item recall window", async () => {
-  const { createSourceItem, listRecentSourceItems } = await importWithTempDb("../lib/db.ts");
+  const { createSourceItem, listRecentSourceItems } = await importWithTempDb("../lib/db-local.ts");
 
   for (let index = 1; index <= 105; index += 1) {
     createSourceItem(`Capture ${index}`);

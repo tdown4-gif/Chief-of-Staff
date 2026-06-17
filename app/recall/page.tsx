@@ -26,7 +26,7 @@ export default async function RecallPage({ searchParams }: RecallPageProps) {
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
   const filters = parseRecallFilters(params);
-  const results = query ? recall(query, 10, undefined, filters.options) : [];
+  const results = query ? await recall(query, 10, undefined, filters.options) : [];
   const viewState = getRecallViewState(query, results.length);
 
   return (

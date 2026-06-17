@@ -149,9 +149,9 @@ function checkExpectedOpenLoops({ cases, sources, openLoops }) {
   );
 }
 
-function checkExpectedRecall({ recall }) {
-  return memoryLoopRecallQueries.map((expected) => {
-    const results = recall(expected.question);
+async function checkExpectedRecall({ recall }) {
+  return Promise.all(memoryLoopRecallQueries.map(async (expected) => {
+    const results = await recall(expected.question);
     const matched = results.some(
       (result) =>
         result.memory?.kind === expected.expectedKind &&
@@ -164,7 +164,7 @@ function checkExpectedRecall({ recall }) {
       matched,
       failure: `recall "${expected.question}": expected ${expected.expectedKind} memory containing "${expected.expectedMemoryIncludes}"`
     };
-  });
+  }));
 }
 
 function findUnexpectedMemories({ caseBySourceId, memories }) {
@@ -186,13 +186,13 @@ function findUnexpectedOpenLoops({ caseBySourceId, openLoops }) {
   });
 }
 
-export function evaluateMemoryLoopFixture({ cases, sources, memories, openLoops, recall }) {
+export async function evaluateMemoryLoopFixture({ cases, sources, memories, openLoops, recall }) {
   const { caseBySourceId, memoriesByCaseId } = buildMemoriesByCase({ cases, sources, memories });
   const kindChecks = checkExpectedKinds({ cases, memoriesByCaseId });
   const memoryChecks = checkExpectedMemories({ cases, memoriesByCaseId });
   const dateChecks = checkExpectedDates({ cases, memoriesByCaseId });
   const openLoopChecks = checkExpectedOpenLoops({ cases, sources, openLoops });
-  const recallChecks = checkExpectedRecall({ recall });
+  const recallChecks = await checkExpectedRecall({ recall });
   const unexpectedMemories = findUnexpectedMemories({ caseBySourceId, memories });
   const unexpectedOpenLoops = findUnexpectedOpenLoops({ caseBySourceId, openLoops });
 

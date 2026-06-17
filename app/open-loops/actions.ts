@@ -16,7 +16,7 @@ function readMemoryId(formData: FormData): number {
 }
 
 async function updateOpenLoop(formData: FormData, status: MemoryStatus): Promise<void> {
-  updateCommitmentStatus(readMemoryId(formData), status);
+  await updateCommitmentStatus(readMemoryId(formData), status);
   revalidatePath("/open-loops");
   redirect("/open-loops");
 }

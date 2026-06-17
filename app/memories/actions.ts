@@ -43,7 +43,7 @@ function revalidateMemoryViews() {
 
 export async function updateReviewedMemory(formData: FormData): Promise<void> {
   const returnTo = readReturnTo(formData);
-  updateMemoryStatus(readMemoryId(formData), readStatus(formData));
+  await updateMemoryStatus(readMemoryId(formData), readStatus(formData));
 
   revalidateMemoryViews();
   redirect(`${returnTo}?memoryUpdated=1`);
@@ -57,7 +57,7 @@ export async function correctMemoryContent(formData: FormData): Promise<void> {
     throw new Error("Memory correction requires content.");
   }
 
-  updateMemoryContent(readMemoryId(formData), rawContent);
+  await updateMemoryContent(readMemoryId(formData), rawContent);
 
   revalidateMemoryViews();
   redirect(`${returnTo}?memoryUpdated=1`);
@@ -65,7 +65,7 @@ export async function correctMemoryContent(formData: FormData): Promise<void> {
 
 export async function deleteReviewedMemory(formData: FormData): Promise<void> {
   const returnTo = readReturnTo(formData);
-  deleteMemory(readMemoryId(formData));
+  await deleteMemory(readMemoryId(formData));
 
   revalidateMemoryViews();
   redirect(`${returnTo}?memoryUpdated=1`);
