@@ -353,6 +353,25 @@ export function updateMemoryStatus(memoryId: number, status: MemoryStatus): Memo
   return mapMemory(row);
 }
 
+export function updateCommitmentStatus(memoryId: number, status: MemoryStatus): Memory | null {
+  if (!Number.isInteger(memoryId) || memoryId < 1) {
+    throw new Error("Memory requires a valid id.");
+  }
+
+  validateMemoryStatus(status);
+  const database = getDb();
+  database.prepare("UPDATE memories SET status = ? WHERE id = ? AND kind = 'commitment'").run(status, memoryId);
+  const row = database
+    .prepare(`
+      SELECT id, source_item_id, kind, content, confidence, rationale, metadata_json, status, created_at
+      FROM memories
+      WHERE id = ? AND kind = 'commitment'
+    `)
+    .get(memoryId) as MemoryRow | undefined;
+
+  return row ? mapMemory(row) : null;
+}
+
 export function listOpenCommitments(limit = 50): MemoryWithSource[] {
   const safeLimit = Math.min(Math.max(limit, 1), 100);
   const rows = getDb()

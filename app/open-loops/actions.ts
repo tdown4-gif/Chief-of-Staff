@@ -1,6 +1,6 @@
 "use server";
 
-import { updateMemoryStatus, type MemoryStatus } from "@/lib/db";
+import { updateCommitmentStatus, type MemoryStatus } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -16,7 +16,7 @@ function readMemoryId(formData: FormData): number {
 }
 
 async function updateOpenLoop(formData: FormData, status: MemoryStatus): Promise<void> {
-  updateMemoryStatus(readMemoryId(formData), status);
+  updateCommitmentStatus(readMemoryId(formData), status);
   revalidatePath("/open-loops");
   redirect("/open-loops");
 }

@@ -68,3 +68,33 @@ test("done and dismissed commitments are removed from open loops", async () => {
 
   assert.deepEqual(dbModule.listOpenCommitments(), []);
 });
+
+test("open-loop status updates validate status and tolerate missing memories", async () => {
+  const dbModule = await importWithTempDb("../lib/db.ts");
+  const source = dbModule.createSourceItem("Need to send Sarah the pricing notes.", "text");
+  const memory = dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "commitment",
+    content: "Send Sarah the pricing notes",
+    confidence: 92,
+    rationale: "The source says Ty needs to send Sarah notes."
+  });
+
+  assert.throws(() => dbModule.updateMemoryStatus(memory.id, "paused"), /Memory status must be active, done, or dismissed/);
+  assert.equal(dbModule.updateCommitmentStatus(9999, "done"), null);
+});
+
+test("open-loop actions only update commitment memories", async () => {
+  const dbModule = await importWithTempDb("../lib/db.ts");
+  const source = dbModule.createSourceItem("Idea: better recall snippets.", "text");
+  const idea = dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "idea",
+    content: "better recall snippets",
+    confidence: 88,
+    rationale: "The source uses an explicit idea label."
+  });
+
+  assert.equal(dbModule.updateCommitmentStatus(idea.id, "dismissed"), null);
+  assert.equal(dbModule.listMemoriesForSource(source.id)[0].status, "active");
+});

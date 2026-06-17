@@ -194,6 +194,15 @@ This deliberately avoids separate person, project, idea, and commitment modules 
 
 It currently supports the basic open-loops view for commitment memories only. This is not a full memory lifecycle, task system, or workflow engine.
 
+`done` means Ty believes a real commitment has been handled. `dismissed` means the proposed commitment should no longer appear in open loops, often because the extraction was noise or not useful.
+
+Explicitly deferred from open loops v0:
+
+- due dates
+- snooze or reminders
+- priority or manual sorting
+- notifications
+
 ### extraction v0
 
 The current extraction pipeline is intentionally small:

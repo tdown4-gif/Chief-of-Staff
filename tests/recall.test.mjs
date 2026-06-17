@@ -48,3 +48,28 @@ test("recall searches raw captures even when no memory has been extracted", asyn
   assert.equal(results[0].memory, null);
   assert.match(results[0].sourceSnippet, /venture briefs/);
 });
+
+test("recall handles plural memory-kind queries and centers source snippets on evidence", async () => {
+  const dbModule = await importWithTempDb("../lib/db.ts");
+  const { recall } = await import("../lib/recall.ts");
+  const filler = "Background note. ".repeat(30);
+  const source = dbModule.createSourceItem(
+    `${filler}Need to follow up with Sarah about pricing after the demo on July 12, 2026.`,
+    "text"
+  );
+
+  dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "commitment",
+    content: "Follow up with Sarah about pricing after the demo",
+    confidence: 92,
+    rationale: "The source says Ty needs to follow up with Sarah."
+  });
+
+  const results = recall("What commitments have I made recently?");
+
+  assert.equal(results.length, 1);
+  assert.equal(results[0].memory?.kind, "commitment");
+  assert.match(results[0].sourceSnippet, /Need to follow up with Sarah/);
+  assert.ok(results[0].sourceSnippet.startsWith("..."));
+});
