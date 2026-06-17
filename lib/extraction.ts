@@ -1,4 +1,5 @@
 import { createMemories, type Memory, type MemoryKind, type SourceItem } from "./db.ts";
+import { createModelProviderFromEnv, type FetchImpl, type JsonModelProvider, type ModelProviderEnv } from "./model-provider.ts";
 
 export type ExplicitDate = {
   text: string;
@@ -17,6 +18,47 @@ export type MemoryDraft = {
 
 export type MemoryExtractor = {
   extract(source: SourceItem): Promise<MemoryDraft[]> | MemoryDraft[];
+};
+
+const memoryExtractionSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    memories: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          kind: { type: "string", enum: ["person", "project", "idea", "commitment"] },
+          content: { type: "string" },
+          confidence: { type: "integer", minimum: 0, maximum: 100 },
+          rationale: { type: "string" },
+          metadata: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              explicitDates: {
+                type: "array",
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  properties: {
+                    text: { type: "string" },
+                    isoDate: { type: ["string", "null"] }
+                  },
+                  required: ["text", "isoDate"]
+                }
+              }
+            },
+            required: ["explicitDates"]
+          }
+        },
+        required: ["kind", "content", "confidence", "rationale"]
+      }
+    }
+  },
+  required: ["memories"]
 };
 
 const monthNumbers: Record<string, string> = {
@@ -216,7 +258,65 @@ export const deterministicFallbackExtractor: MemoryExtractor = {
   }
 };
 
-export function createDefaultExtractor(): MemoryExtractor {
+function isMemoryDraft(value: unknown): value is MemoryDraft {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const draft = value as Partial<MemoryDraft>;
+  return (
+    (draft.kind === "person" || draft.kind === "project" || draft.kind === "idea" || draft.kind === "commitment") &&
+    typeof draft.content === "string" &&
+    typeof draft.confidence === "number" &&
+    typeof draft.rationale === "string"
+  );
+}
+
+function extractDraftsFromModelJson(json: unknown): MemoryDraft[] {
+  if (typeof json !== "object" || json === null || !("memories" in json) || !Array.isArray(json.memories)) {
+    throw new Error("Model extractor returned invalid memory JSON.");
+  }
+
+  return json.memories.filter(isMemoryDraft);
+}
+
+function buildModelUserPrompt(source: SourceItem): string {
+  return [
+    `Source id: ${source.id}`,
+    `Source type: ${source.sourceType}`,
+    `Captured at: ${source.createdAt}`,
+    "",
+    "Raw source:",
+    source.content
+  ].join("\n");
+}
+
+export function createModelBackedExtractor(provider: JsonModelProvider, fallback: MemoryExtractor): MemoryExtractor {
+  return {
+    async extract(source: SourceItem): Promise<MemoryDraft[]> {
+      try {
+        return extractDraftsFromModelJson(
+          await provider.generateJson({
+            schemaName: "memory_extraction",
+            schema: memoryExtractionSchema,
+            system:
+              "Extract only source-backed memory drafts for Ty's external memory. Do not invent facts. Return people, projects, ideas, and commitments only when explicit in the source.",
+            user: buildModelUserPrompt(source)
+          })
+        );
+      } catch {
+        return fallback.extract(source);
+      }
+    }
+  };
+}
+
+export function createDefaultExtractor(env: ModelProviderEnv = process.env, fetchImpl: FetchImpl = fetch): MemoryExtractor {
+  const provider = createModelProviderFromEnv(env, fetchImpl);
+  if (provider) {
+    return createModelBackedExtractor(provider, deterministicFallbackExtractor);
+  }
+
   return deterministicFallbackExtractor;
 }
 

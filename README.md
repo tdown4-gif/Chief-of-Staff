@@ -15,9 +15,11 @@ This repo is currently building the memory foundation only:
 - Show recent captures in the universal inbox.
 - Produce source-backed proposed memories for people, projects, ideas, commitments, and explicit dates.
 - Search raw captures and proposed memories from `/recall`.
-- Keep the app usable from laptop and phone widths.
+- Keep the app usable from laptop and iPhone widths as a web-first app/PWA.
 
 Do **not** build Chief of Staff features yet. Travel, gifts, skills, CRM, SBIR tracking, research agents, resume updates, expense tracking, relationship intelligence, calendar management, and dashboards are explicitly deferred.
+
+V1 is an app, but it is not a native iPhone app yet. The target is one responsive Trusted External Memory web app that can run on laptop, open in iPhone Safari, and be saved to the iPhone Home Screen for fast capture. Native iOS/App Store work comes later after the memory loop proves itself.
 
 ## App stack
 
@@ -53,6 +55,16 @@ npm run build
 npm run start
 ```
 
+## Dogfood memory eval
+
+Run the 50-note dogfood check before adding new product areas:
+
+```bash
+node scripts/dogfood-memory-eval.mjs
+```
+
+It seeds realistic messy notes across people, ideas, commitments, Palms AI, travel context, and random thoughts, then checks the V1 questions from `vision/mvp.md` for misses and false positives.
+
 ## First manual test
 
 1. Open `/capture` on laptop or phone.
@@ -65,7 +77,17 @@ npm run start
 
 ## Extraction v0
 
-There is no LLM key configured by default. The first extraction pass uses a small `MemoryExtractor` interface with a deterministic fallback in `lib/extraction.ts`.
+There is no LLM key required by default. Extraction uses a small `MemoryExtractor` interface with a deterministic fallback in `lib/extraction.ts`.
+
+Optional model-backed extraction is available through an OpenAI-compatible provider hook:
+
+```bash
+MODEL_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-5.1-mini
+```
+
+If no provider is configured, or if the provider call fails, capture still works and falls back to deterministic extraction.
 
 The fallback extracts only:
 

@@ -11,18 +11,20 @@ test("recall view state distinguishes idle, results, and no-result states", asyn
   assert.equal(formatRecallResultsHeading(" insurance ", 3), '3 source-backed results for "insurance"');
 });
 
-test("recall view parses kind and status filters from query params", async () => {
+test("recall view parses kind status and source-type filters from query params", async () => {
   const { parseRecallFilters } = await import("../lib/recall-view.ts");
 
-  assert.deepEqual(parseRecallFilters({ kind: "project", status: "done" }), {
+  assert.deepEqual(parseRecallFilters({ kind: "project", status: "done", sourceType: "link" }), {
     selectedKind: "project",
     selectedStatus: "done",
-    options: { kinds: ["project"], statuses: ["done"] }
+    selectedSourceType: "link",
+    options: { kinds: ["project"], statuses: ["done"], sourceTypes: ["link"] }
   });
 
-  assert.deepEqual(parseRecallFilters({ kind: "anything", status: "anything" }), {
+  assert.deepEqual(parseRecallFilters({ kind: "anything", status: "anything", sourceType: "anything" }), {
     selectedKind: "all",
     selectedStatus: "active",
+    selectedSourceType: "all",
     options: { statuses: ["active"] }
   });
 });

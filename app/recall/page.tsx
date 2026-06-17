@@ -5,7 +5,7 @@ import { formatRecallResultsHeading, getRecallViewState, parseRecallFilters } fr
 export const dynamic = "force-dynamic";
 
 type RecallPageProps = {
-  searchParams: Promise<{ q?: string; kind?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; kind?: string; status?: string; sourceType?: string }>;
 };
 
 const dateFormatter = new Intl.DateTimeFormat("en", {
@@ -58,6 +58,19 @@ export default async function RecallPage({ searchParams }: RecallPageProps) {
             <option value="done">Done</option>
             <option value="dismissed">Dismissed</option>
           </select>
+          <select
+            aria-label="Source type"
+            className="recall-select"
+            defaultValue={filters.selectedSourceType}
+            name="sourceType"
+          >
+            <option value="all">All sources</option>
+            <option value="text">Text</option>
+            <option value="note">Notes</option>
+            <option value="link">Links</option>
+            <option value="document">Documents</option>
+            <option value="contact">Contacts</option>
+          </select>
           <button className="button" type="submit">Search memory</button>
         </form>
       </section>
@@ -78,6 +91,7 @@ export default async function RecallPage({ searchParams }: RecallPageProps) {
                   <div className="capture-meta">
                     <span className="badge">{result.memory ? result.memory.kind : "source"}</span>
                     {result.memory ? <span className="badge badge-muted">{result.memory.status}</span> : null}
+                    <span className="badge badge-muted">{result.source.sourceType}</span>
                     <span>Source #{result.source.id}</span>
                     <span>{dateFormatter.format(new Date(result.source.createdAt))}</span>
                     {result.memory ? <span>{result.memory.confidence}% confidence</span> : null}

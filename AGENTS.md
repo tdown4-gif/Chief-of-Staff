@@ -102,6 +102,8 @@ Prioritize:
 - Source-backed retrieval.
 - People, projects, ideas, commitments, and sources.
 
+Clarification: V1 is still an app. It is a responsive web app / lightweight PWA first, usable from laptop and iPhone browser, with a fast `/capture` path that can be saved to the iPhone Home Screen. Do not interpret "no native iPhone app" as "not building an app." Native iOS, App Store work, and Swift builds are deferred until the memory loop works.
+
 Defer:
 
 - Proactive research.

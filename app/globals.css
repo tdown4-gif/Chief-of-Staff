@@ -331,7 +331,7 @@ p {
 
 .recall-form {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(130px, auto) minmax(130px, auto) auto;
+  grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(130px, auto)) auto;
   gap: 10px;
 }
 

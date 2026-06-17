@@ -62,6 +62,19 @@ test("recall can match source type when asking for links or documents", async ()
   assert.equal(results[0].source.sourceType, "link");
 });
 
+test("recall can filter results to requested source types", async () => {
+  const dbModule = await importWithTempDb("../lib/db.ts");
+  const { recall } = await import("../lib/recall.ts");
+  const linkSource = dbModule.createSourceItem("Renewal workflow reference: https://example.com/renewals", "link");
+  dbModule.createSourceItem("Renewal workflow summary copied from a call.", "note");
+
+  const results = recall("renewal workflow", 10, undefined, { sourceTypes: ["link"] });
+
+  assert.equal(results.length, 1);
+  assert.equal(results[0].source.id, linkSource.id);
+  assert.equal(results[0].source.sourceType, "link");
+});
+
 test("recall handles plural memory-kind queries and centers source snippets on evidence", async () => {
   const dbModule = await importWithTempDb("../lib/db.ts");
   const { recall } = await import("../lib/recall.ts");

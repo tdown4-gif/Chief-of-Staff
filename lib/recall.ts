@@ -23,6 +23,7 @@ export type RecallDependencies = {
 export type RecallOptions = {
   kinds?: MemoryKind[];
   statuses?: MemoryStatus[];
+  sourceTypes?: string[];
   includeRawSources?: boolean;
 };
 
@@ -45,13 +46,19 @@ const STOP_WORDS = new Set([
   "for",
   "from",
   "guy",
+  "have",
   "i",
   "in",
   "is",
+  "made",
+  "met",
   "me",
+  "mentioned",
   "my",
   "of",
+  "once",
   "on",
+  "recently",
   "that",
   "the",
   "to",
@@ -80,6 +87,28 @@ function expandQueryTokens(question: string): string[] {
   }
 
   return tokens;
+}
+
+function inferMemoryKinds(question: string): MemoryKind[] | null {
+  const normalizedQuestion = question.toLowerCase();
+
+  if (/\b(forgetting|forgot|forget|owe|open loops?|commitments?)\b/.test(normalizedQuestion)) {
+    return ["commitment"];
+  }
+
+  if (/\bideas?\b/.test(normalizedQuestion)) {
+    return ["idea"];
+  }
+
+  if (/\bwho\b/.test(normalizedQuestion)) {
+    return ["person"];
+  }
+
+  if (/\bprojects?\b/.test(normalizedQuestion)) {
+    return ["project"];
+  }
+
+  return null;
 }
 
 function tokenVariants(token: string): string[] {
@@ -112,6 +141,25 @@ function countSourceMatches(source: SourceItem, queryTokens: string[]): number {
   return countMatches(`${source.sourceType} ${source.content}`, queryTokens);
 }
 
+const GENERIC_RECALL_TOKENS = new Set([
+  "ai",
+  "business",
+  "commitment",
+  "commitments",
+  "forgetting",
+  "follow",
+  "idea",
+  "ideas",
+  "need",
+  "owe",
+  "promised",
+  "remember"
+]);
+
+function selectRequiredQueryTokens(queryTokens: string[]): string[] {
+  return queryTokens.filter((token) => !GENERIC_RECALL_TOKENS.has(token));
+}
+
 function buildSourceSnippet(sourceContent: string, queryTokens: string[], maxLength = 220): string {
   const normalized = sourceContent.replace(/\s+/g, " ").trim();
   if (normalized.length <= maxLength) {
@@ -137,10 +185,15 @@ function memoryMatchesOptions(memory: Memory, options: Required<RecallOptions>):
 }
 
 function normalizeOptions(options: RecallOptions = {}): Required<RecallOptions> {
+  const kinds: MemoryKind[] = options.kinds?.length
+    ? [...new Set(options.kinds)]
+    : ["person", "project", "idea", "commitment"];
+
   return {
-    kinds: options.kinds?.length ? [...new Set(options.kinds)] : ["person", "project", "idea", "commitment"],
+    kinds,
     statuses: options.statuses?.length ? [...new Set(options.statuses)] : ["active"],
-    includeRawSources: options.includeRawSources ?? true
+    sourceTypes: options.sourceTypes?.length ? [...new Set(options.sourceTypes)] : [],
+    includeRawSources: options.includeRawSources ?? !options.kinds?.length
   };
 }
 
@@ -155,18 +208,29 @@ export function recall(
     return [];
   }
 
-  const normalizedOptions = normalizeOptions(options);
+  const inferredKinds = options.kinds?.length ? null : inferMemoryKinds(question);
+  const normalizedOptions = normalizeOptions(inferredKinds ? { ...options, kinds: inferredKinds } : options);
+  const requiredQueryTokens = selectRequiredQueryTokens(queryTokens);
   const sources = dependencies.listRecentSourceItems(RECALL_SOURCE_WINDOW);
   const memoriesBySource = dependencies.listMemoriesForSources(sources.map((source) => source.id));
   const results = sources.flatMap<RecallResult>((source) => {
+    if (normalizedOptions.sourceTypes.length > 0 && !normalizedOptions.sourceTypes.includes(source.sourceType)) {
+      return [];
+    }
+
     const memories = memoriesBySource[source.id] ?? [];
     const sourceScore = countSourceMatches(source, queryTokens);
     let filteredOutMemoryMatched = false;
     const memoryResults = memories.flatMap<RecallResult>((memory) => {
       const memoryText = `${memory.kind} ${memory.content} ${memory.rationale}`;
       const memoryScore = countMatches(memoryText, queryTokens);
+      const requiredScore = countMatches(`${source.content} ${memoryText}`, requiredQueryTokens);
       if (!memoryMatchesOptions(memory, normalizedOptions)) {
         filteredOutMemoryMatched ||= memoryScore > 0;
+        return [];
+      }
+
+      if (requiredQueryTokens.length > 0 && requiredScore === 0) {
         return [];
       }
 
@@ -181,7 +245,10 @@ export function recall(
       return memoryResults;
     }
 
-    return normalizedOptions.includeRawSources && !filteredOutMemoryMatched && sourceScore > 0
+    return normalizedOptions.includeRawSources &&
+      !filteredOutMemoryMatched &&
+      sourceScore > 0 &&
+      (requiredQueryTokens.length === 0 || countSourceMatches(source, requiredQueryTokens) > 0)
       ? [{ source, memory: null, sourceSnippet: buildSourceSnippet(source.content, queryTokens), score: sourceScore }]
       : [];
   });

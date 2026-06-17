@@ -57,6 +57,7 @@ Those may become future applications of the memory layer.
 - Web app.
 - Cross-device responsive capture experience.
 - iPhone home-screen capture shortcut or lightweight PWA entry point.
+- Fast iPhone browser capture without a native App Store build.
 - Universal inbox.
 - Manual capture form.
 - File or document text capture.
