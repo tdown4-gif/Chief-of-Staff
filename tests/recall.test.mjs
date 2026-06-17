@@ -73,3 +73,47 @@ test("recall handles plural memory-kind queries and centers source snippets on e
   assert.match(results[0].sourceSnippet, /Need to follow up with Sarah/);
   assert.ok(results[0].sourceSnippet.startsWith("..."));
 });
+
+test("recall fetches memories for recent sources in one batch", async () => {
+  const { recall } = await import(`../lib/recall.ts?batch=${Date.now()}-${Math.random()}`);
+  const createdAt = "2026-06-16T12:00:00.000Z";
+  const sources = [
+    {
+      id: 1,
+      content: "Met Mike. Insurance agency owner. Interested in AI workflows.",
+      sourceType: "text",
+      createdAt
+    },
+    {
+      id: 2,
+      content: "Archived receipts and cleaned the desktop.",
+      sourceType: "text",
+      createdAt
+    }
+  ];
+  const memory = {
+    id: 10,
+    sourceItemId: 1,
+    kind: "person",
+    content: "Mike",
+    confidence: 84,
+    rationale: "The source says Ty met Mike.",
+    metadataJson: null,
+    status: "active",
+    createdAt
+  };
+  let requestedSourceIds = [];
+
+  const results = recall("insurance", 10, {
+    listRecentSourceItems: () => sources,
+    listMemoriesForSources: (sourceIds) => {
+      requestedSourceIds = sourceIds;
+      return { 1: [memory], 2: [] };
+    }
+  });
+
+  assert.deepEqual(requestedSourceIds, [1, 2]);
+  assert.equal(results.length, 1);
+  assert.equal(results[0].source.id, 1);
+  assert.equal(results[0].memory?.content, "Mike");
+});

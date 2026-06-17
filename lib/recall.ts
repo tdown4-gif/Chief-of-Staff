@@ -1,10 +1,20 @@
-import { listMemoriesForSource, listRecentSourceItems, type Memory, type SourceItem } from "./db.ts";
+import { listMemoriesForSources, listRecentSourceItems, type MemoriesBySourceId, type Memory, type SourceItem } from "./db.ts";
 
 export type RecallResult = {
   source: SourceItem;
   memory: Memory | null;
   sourceSnippet: string;
   score: number;
+};
+
+export type RecallDependencies = {
+  listRecentSourceItems: (limit?: number) => SourceItem[];
+  listMemoriesForSources: (sourceItemIds: number[]) => MemoriesBySourceId;
+};
+
+const defaultRecallDependencies: RecallDependencies = {
+  listRecentSourceItems,
+  listMemoriesForSources
 };
 
 const STOP_WORDS = new Set([
@@ -91,15 +101,20 @@ function buildSourceSnippet(sourceContent: string, queryTokens: string[], maxLen
   return `${prefix}${normalized.slice(start, end)}${suffix}`;
 }
 
-export function recall(question: string, limit = 10): RecallResult[] {
+export function recall(
+  question: string,
+  limit = 10,
+  dependencies: RecallDependencies = defaultRecallDependencies
+): RecallResult[] {
   const queryTokens = Array.from(new Set(tokenize(question)));
   if (queryTokens.length === 0) {
     return [];
   }
 
-  const sources = listRecentSourceItems(100);
+  const sources = dependencies.listRecentSourceItems(100);
+  const memoriesBySource = dependencies.listMemoriesForSources(sources.map((source) => source.id));
   const results = sources.flatMap<RecallResult>((source) => {
-    const memories = listMemoriesForSource(source.id);
+    const memories = memoriesBySource[source.id] ?? [];
     const sourceScore = countMatches(source.content, queryTokens);
     const memoryResults = memories.flatMap<RecallResult>((memory) => {
       const memoryText = `${memory.kind} ${memory.content} ${memory.rationale}`;
