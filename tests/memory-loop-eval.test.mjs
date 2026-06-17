@@ -3,6 +3,15 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
+import {
+  evaluateMemoryLoopFixture,
+  memoryLoopCases,
+  memoryLoopRecallQueries
+} from "./memory-loop-fixture.mjs";
+
+function countExpected(field) {
+  return memoryLoopCases.reduce((total, item) => total + (item[field]?.length ?? 0), 0);
+}
 
 async function importLoopWithTempDb() {
   const dir = mkdtempSync(path.join(tmpdir(), "chief-of-staff-memory-loop-eval-"));
@@ -18,15 +27,7 @@ async function importLoopWithTempDb() {
 
 test("seeded capture extraction recall and open-loops loop stays source-backed", async () => {
   const { dbModule, extractionModule, recallModule } = await importLoopWithTempDb();
-  const seedNotes = [
-    "Met Mike after the demo. Insurance agency owner. He keeps losing renewal follow-through in scattered notes.",
-    "Idea: AI tool for insurance agencies that remembers renewal dates and suggests outreach.",
-    "Palms AI project: turn messy founder notes into structured venture briefs.",
-    "Need to follow up with Sarah about pricing after the demo on July 12, 2026.",
-    "Archived receipts, cleaned the desktop, and watched a movie."
-  ];
-
-  const sources = seedNotes.map((note) => dbModule.createSourceItem(note, "text"));
+  const sources = memoryLoopCases.map((item) => dbModule.createSourceItem(item.note, "text"));
   const results = await Promise.all(
     sources.map((source) => extractionModule.extractAndStoreMemoriesForSource(source))
   );
@@ -34,27 +35,27 @@ test("seeded capture extraction recall and open-loops loop stays source-backed",
 
   assert.deepEqual(
     results.map((result) => result.error),
-    [null, null, null, null, null]
+    memoryLoopCases.map(() => null)
   );
-  assert.ok(memories.some((memory) => memory.kind === "person" && memory.content.includes("Mike")));
-  assert.ok(memories.some((memory) => memory.kind === "idea" && memory.content.includes("insurance agencies")));
-  assert.ok(memories.some((memory) => memory.kind === "project" && memory.content.includes("Palms AI")));
-  assert.ok(memories.some((memory) => memory.kind === "commitment" && memory.content.includes("Sarah")));
-
-  const insuranceResults = recallModule.recall("What was the AI idea for insurance agencies?");
-  const insuranceAnswer = insuranceResults.find((result) => result.memory?.kind === "idea");
-
-  assert.ok(insuranceAnswer, "expected recall to return the insurance idea memory");
-  assert.match(insuranceAnswer.memory.content, /insurance agencies/);
-  assert.match(insuranceAnswer.source.content, /remembers renewal dates/);
-  assert.match(insuranceAnswer.sourceSnippet, /insurance agencies/);
 
   const loops = dbModule.listOpenCommitments();
-  const sarahLoop = loops.find((loop) => loop.memory.content.includes("Sarah"));
+  const summary = evaluateMemoryLoopFixture({
+    cases: memoryLoopCases,
+    sources,
+    memories,
+    openLoops: loops,
+    recall: recallModule.recall
+  });
+  const expectedKinds = countExpected("expectedKinds");
+  const expectedMemories = countExpected("expectedMemories");
+  const expectedDates = countExpected("expectedExplicitDates");
+  const expectedOpenLoops = countExpected("expectedOpenLoops");
 
-  assert.equal(loops.length, 1);
-  assert.ok(sarahLoop, "expected open loops to include the Sarah pricing commitment");
-  assert.equal(sarahLoop.memory.kind, "commitment");
-  assert.match(sarahLoop.source.content, /July 12, 2026/);
-  assert.ok(!loops.some((loop) => loop.source.id === sources[4].id), "benign note should not create an open loop");
+  assert.deepEqual(summary.kindCoverage, { matched: expectedKinds, total: expectedKinds }, summary.failures.join("\n"));
+  assert.deepEqual(summary.memoryCoverage, { matched: expectedMemories, total: expectedMemories }, summary.failures.join("\n"));
+  assert.deepEqual(summary.dateCoverage, { matched: expectedDates, total: expectedDates }, summary.failures.join("\n"));
+  assert.deepEqual(summary.openLoopCoverage, { matched: expectedOpenLoops, total: expectedOpenLoops }, summary.failures.join("\n"));
+  assert.deepEqual(summary.recallCoverage, { matched: memoryLoopRecallQueries.length, total: memoryLoopRecallQueries.length }, summary.failures.join("\n"));
+  assert.equal(summary.unexpectedMemoryCount, 0, summary.failures.join("\n"));
+  assert.equal(summary.unexpectedOpenLoopCount, 0, summary.failures.join("\n"));
 });
