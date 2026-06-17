@@ -21,6 +21,8 @@ Do **not** build Chief of Staff features yet. Travel, gifts, skills, CRM, SBIR t
 
 V1 is an app, but it is not a native iPhone app yet. The target is one responsive Trusted External Memory web app that can run on laptop, open in iPhone Safari, and be saved to the iPhone Home Screen for fast capture. Native iOS/App Store work comes later after the memory loop proves itself.
 
+Important correction for the MVP path: capture is iPhone-first. The web app can remain the dashboard, recall, review, and memory-management surface, but Ty's primary daily capture path should feel native and take under 5 seconds from iPhone.
+
 ## App stack
 
 - Next.js
@@ -29,6 +31,14 @@ V1 is an app, but it is not a native iPhone app yet. The target is one responsiv
 - Simple CSS
 
 SQLite data is stored at `data/chief-of-staff.db` by default and is ignored by git. You can override the path with `DATABASE_URL=file:/absolute/path/to.db`.
+
+## Deployment environment
+
+Local development uses SQLite by default at `data/chief-of-staff.db`.
+
+For the iPhone-first MVP path, production will use hosted Turso/libSQL so phone and laptop share one data store. This branch keeps the local SQLite fallback and introduces the database adapter boundary. The next persistence PR wires `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`.
+
+Future iPhone Shortcut capture will use `CAPTURE_API_TOKEN`. Generate a long random token, store it only in deployment secrets and the iOS Shortcut, never log it, and rotate it by replacing the deployment secret and updating the Shortcut `Authorization` header.
 
 ## Local setup
 
