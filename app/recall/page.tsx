@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { recall } from "@/lib/recall";
+import { formatRecallResultsHeading, getRecallViewState } from "@/lib/recall-view";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export default async function RecallPage({ searchParams }: RecallPageProps) {
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
   const results = query ? recall(query) : [];
+  const viewState = getRecallViewState(query, results.length);
 
   return (
     <main className="shell">
@@ -47,10 +49,16 @@ export default async function RecallPage({ searchParams }: RecallPageProps) {
         </form>
       </section>
 
-      {query ? (
+      {viewState === "idle" ? (
+        <section className="recall-results" aria-label="Recall status">
+          <div className="empty-state">No search yet.</div>
+        </section>
+      ) : null}
+
+      {viewState !== "idle" ? (
         <section className="recall-results" aria-label="Recall results">
-          <h2>Results for &ldquo;{query}&rdquo;</h2>
-          {results.length > 0 ? (
+          <h2>{formatRecallResultsHeading(query, results.length)}</h2>
+          {viewState === "results" ? (
             <div className="inbox">
               {results.map((result) => (
                 <article className="capture-item" key={`${result.source.id}-${result.memory?.id ?? "source"}`}>
@@ -78,7 +86,7 @@ export default async function RecallPage({ searchParams }: RecallPageProps) {
               ))}
             </div>
           ) : (
-            <div className="empty-state">No source-backed matches yet.</div>
+            <div className="empty-state">No source-backed matches for &ldquo;{query}&rdquo;.</div>
           )}
         </section>
       ) : null}
