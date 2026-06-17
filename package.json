@@ -2,6 +2,7 @@
   "name": "chief-of-staff",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "Trusted External Memory v0: capture, recall, and source-backed retrieval.",
   "scripts": {
     "dev": "next dev",

@@ -219,6 +219,43 @@ p {
   line-height: 1.5;
 }
 
+.memory-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.memory-list-title {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.memory-row {
+  display: grid;
+  gap: 4px;
+}
+
+.memory-content,
+.memory-rationale {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.memory-content {
+  color: #1e293b;
+  font-weight: 650;
+}
+
+.memory-rationale {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
 .empty-state {
   border: 1px dashed #cbd5e1;
   border-radius: 8px;

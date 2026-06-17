@@ -184,3 +184,20 @@ Allowed `kind` values are:
 - `commitment`
 
 This deliberately avoids separate person, project, idea, and commitment modules for v0. Those object types are represented by `memories.kind` until extraction and recall prove that more structure is needed.
+
+### extraction v0
+
+The current extraction pipeline is intentionally small:
+
+- `MemoryExtractor` defines the provider interface.
+- `deterministicFallbackExtractor` runs when no LLM integration is configured.
+- `extractAndStoreMemoriesForSource` stores proposed memories for a source item and returns an error instead of throwing through capture.
+
+The fallback only proposes:
+
+- people
+- projects
+- ideas
+- commitments
+
+Explicit dates are stored inside `memories.metadata_json` as supporting metadata, not as a separate memory kind. This keeps V0 anchored to source-backed memory without introducing date, event, trip, task-management, CRM, or calendar modules.

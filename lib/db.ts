@@ -50,12 +50,16 @@ type MemoryRow = {
 };
 
 const dataDir = path.join(process.cwd(), "data");
-const dbPath = process.env.DATABASE_URL?.replace(/^file:/, "") ?? path.join(dataDir, "chief-of-staff.db");
 
 let db: Database.Database | undefined;
 
+function getDbPath() {
+  return process.env.DATABASE_URL?.replace(/^file:/, "") ?? path.join(dataDir, "chief-of-staff.db");
+}
+
 function getDb() {
   if (!db) {
+    const dbPath = getDbPath();
     mkdirSync(path.dirname(dbPath), { recursive: true });
     db = new Database(dbPath);
     db.pragma("journal_mode = WAL");

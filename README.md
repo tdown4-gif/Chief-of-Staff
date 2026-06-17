@@ -13,6 +13,7 @@ This repo is currently building the memory foundation only:
 - Capture messy context quickly.
 - Preserve each capture as a raw source item.
 - Show recent captures in the universal inbox.
+- Produce source-backed proposed memories for people, projects, ideas, commitments, and explicit dates.
 - Keep the app usable from laptop and phone widths.
 
 Do **not** build Chief of Staff features yet. Travel, gifts, skills, CRM, SBIR tracking, research agents, resume updates, expense tracking, relationship intelligence, calendar management, and dashboards are explicitly deferred.
@@ -57,6 +58,21 @@ npm run start
    `Need to follow up with Sarah about pricing after the demo.`
 3. Save it.
 4. Confirm `/inbox` shows the raw source item with timestamp.
+5. Confirm the source item shows a proposed commitment memory with confidence and rationale.
+
+## Extraction v0
+
+There is no LLM key configured by default. The first extraction pass uses a small `MemoryExtractor` interface with a deterministic fallback in `lib/extraction.ts`.
+
+The fallback extracts only:
+
+- People
+- Projects
+- Ideas
+- Commitments
+- Explicit dates as metadata on proposed memories
+
+Every stored memory points back to `source_items.id`, includes confidence, and preserves a rationale. Extraction errors are isolated so a failed extraction does not break raw capture.
 
 ## Start here
 
