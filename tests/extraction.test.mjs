@@ -67,6 +67,35 @@ test("deterministic fallback does not invent people from lowercase nouns/pronoun
   assert.ok(!drafts.some((draft) => draft.kind === "person"), "should not propose person memories here");
 });
 
+test("deterministic fallback does not turn follow-up nouns into commitments", async () => {
+  const { extractMemoryDrafts } = await import("../lib/extraction.ts");
+  const source = {
+    id: 9,
+    content: "Met Mike. Insurance agency owner. Interested in AI workflows for renewals and customer follow-up.",
+    sourceType: "text",
+    createdAt: "2026-06-16T12:00:00.000Z"
+  };
+
+  const drafts = await extractMemoryDrafts(source);
+
+  assert.ok(drafts.some((draft) => draft.kind === "person" && draft.content === "Mike"));
+  assert.ok(!drafts.some((draft) => draft.kind === "commitment"), "customer follow-up is context, not an obligation");
+});
+
+test("deterministic fallback still extracts explicit follow-up commitments", async () => {
+  const { extractMemoryDrafts } = await import("../lib/extraction.ts");
+  const source = {
+    id: 10,
+    content: "Follow up with Sarah about pricing after the demo.",
+    sourceType: "text",
+    createdAt: "2026-06-16T12:00:00.000Z"
+  };
+
+  const drafts = await extractMemoryDrafts(source);
+
+  assert.ok(drafts.some((draft) => draft.kind === "commitment" && draft.content.includes("Sarah about pricing")));
+});
+
 test("deterministic fallback ignores benign source text", async () => {
   const { extractMemoryDrafts } = await import("../lib/extraction.ts");
   const source = {

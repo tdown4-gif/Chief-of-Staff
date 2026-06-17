@@ -6,6 +6,12 @@ export const memoryLoopCases = [
     expectedMemories: [{ kind: "person", includes: "Mike" }]
   },
   {
+    id: "person-mike-follow-up-context",
+    note: "Met Mike. Insurance agency owner. Interested in AI workflows for renewals and customer follow-up.",
+    expectedKinds: ["person"],
+    expectedMemories: [{ kind: "person", includes: "Mike" }]
+  },
+  {
     id: "idea-insurance-outreach",
     note: "Idea: AI tool for insurance agencies that remembers renewal dates and suggests outreach.",
     expectedKinds: ["idea"],

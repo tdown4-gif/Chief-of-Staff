@@ -177,7 +177,7 @@ function extractProjectDraft(fragment: string): MemoryDraft | null {
 }
 
 function extractCommitmentDraft(fragment: string): MemoryDraft | null {
-  if (!/\b(need to|follow up|follow-up|owe|promised to|remember to)\b/i.test(fragment)) {
+  if (!/\b(need to|owe|promised to|remember to|follow up\s+(?:with|on|about))\b/i.test(fragment)) {
     return null;
   }
 
