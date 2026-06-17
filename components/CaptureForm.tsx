@@ -1,5 +1,5 @@
 import { saveCapture } from "@/app/actions";
-import { MAX_CAPTURE_CHARACTERS } from "@/lib/capture";
+import { MAX_CAPTURE_CHARACTERS, SOURCE_TYPES } from "@/lib/capture";
 
 export function CaptureForm({ error }: { error?: string }) {
   return (
@@ -7,6 +7,16 @@ export function CaptureForm({ error }: { error?: string }) {
       <label htmlFor="content">
         <strong>Messy thought, note, person, idea, or commitment</strong>
       </label>
+      <div className="capture-field">
+        <label htmlFor="sourceType">Source type</label>
+        <select className="capture-select" defaultValue="text" id="sourceType" name="sourceType">
+          {SOURCE_TYPES.map((sourceType) => (
+            <option key={sourceType} value={sourceType}>
+              {sourceType}
+            </option>
+          ))}
+        </select>
+      </div>
       <textarea
         id="content"
         name="content"

@@ -1,4 +1,7 @@
 export const MAX_CAPTURE_CHARACTERS = 100000;
+export const SOURCE_TYPES = ["text", "note", "link", "document", "contact"] as const;
+
+export type CaptureSourceType = (typeof SOURCE_TYPES)[number];
 
 export type CaptureValidationResult =
   | { ok: true }
@@ -14,4 +17,10 @@ export function validateCaptureContent(content: string): CaptureValidationResult
   }
 
   return { ok: true };
+}
+
+export function normalizeCaptureSourceType(value: FormDataEntryValue | null): CaptureSourceType {
+  return typeof value === "string" && SOURCE_TYPES.includes(value as CaptureSourceType)
+    ? (value as CaptureSourceType)
+    : "text";
 }

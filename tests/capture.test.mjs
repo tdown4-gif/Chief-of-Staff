@@ -30,6 +30,17 @@ test("long text captures are accepted by v0 validation", async () => {
   assert.deepEqual(validateCaptureContent("x".repeat(MAX_CAPTURE_CHARACTERS + 1)), { ok: false, error: "too-long" });
 });
 
+test("capture source types are constrained to a small v0 set", async () => {
+  const { normalizeCaptureSourceType, SOURCE_TYPES } = await import("../lib/capture.ts");
+
+  assert.deepEqual(SOURCE_TYPES, ["text", "note", "link", "document", "contact"]);
+  assert.equal(normalizeCaptureSourceType("link"), "link");
+  assert.equal(normalizeCaptureSourceType("document"), "document");
+  assert.equal(normalizeCaptureSourceType(null), "text");
+  assert.equal(normalizeCaptureSourceType(""), "text");
+  assert.equal(normalizeCaptureSourceType("crm"), "text");
+});
+
 test("source listing supports a thousand-item recall window", async () => {
   const { createSourceItem, listRecentSourceItems } = await importWithTempDb("../lib/db.ts");
 

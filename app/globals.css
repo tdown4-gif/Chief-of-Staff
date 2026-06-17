@@ -156,6 +156,26 @@ p {
   gap: 14px;
 }
 
+.capture-field {
+  display: grid;
+  gap: 6px;
+}
+
+.capture-field label {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.capture-select {
+  width: min(260px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: #ffffff;
+}
+
 .capture-textarea {
   width: 100%;
   min-height: 220px;
@@ -169,6 +189,7 @@ p {
   line-height: 1.5;
 }
 
+.capture-select:focus,
 .capture-textarea:focus {
   outline: 3px solid #dbeafe;
   border-color: #93c5fd;
