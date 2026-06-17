@@ -71,6 +71,17 @@ function tokenize(value: string): string[] {
     ?.filter((token) => token.length > 1 && !STOP_WORDS.has(token)) ?? [];
 }
 
+function expandQueryTokens(question: string): string[] {
+  const tokens = tokenize(question);
+  const normalizedQuestion = question.toLowerCase();
+
+  if (/\b(forgetting|forgot|forget|owe|open loops?)\b/.test(normalizedQuestion)) {
+    tokens.push("commitment", "need", "follow", "remember", "owe", "promised");
+  }
+
+  return tokens;
+}
+
 function tokenVariants(token: string): string[] {
   const variants = new Set([token]);
 
@@ -135,7 +146,7 @@ export function recall(
   dependencies: RecallDependencies = defaultRecallDependencies,
   options: RecallOptions = {}
 ): RecallResult[] {
-  const queryTokens = Array.from(new Set(tokenize(question)));
+  const queryTokens = Array.from(new Set(expandQueryTokens(question)));
   if (queryTokens.length === 0) {
     return [];
   }

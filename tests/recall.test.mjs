@@ -74,6 +74,43 @@ test("recall handles plural memory-kind queries and centers source snippets on e
   assert.ok(results[0].sourceSnippet.startsWith("..."));
 });
 
+test("recall treats forgetting questions as active commitment recall", async () => {
+  const dbModule = await importWithTempDb("../lib/db.ts");
+  const { recall } = await import("../lib/recall.ts");
+  const source = dbModule.createSourceItem("Need to follow up with Sarah about pricing after the demo.", "text");
+
+  dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "commitment",
+    content: "Follow up with Sarah about pricing after the demo",
+    confidence: 92,
+    rationale: "The source says Ty needs to follow up with Sarah."
+  });
+
+  const results = recall("What am I forgetting?");
+
+  assert.equal(results.length, 1);
+  assert.equal(results[0].memory?.kind, "commitment");
+  assert.match(results[0].sourceSnippet, /Need to follow up with Sarah/);
+});
+
+test("forgetting recall still excludes dismissed commitments by default", async () => {
+  const dbModule = await importWithTempDb("../lib/db.ts");
+  const { recall } = await import("../lib/recall.ts");
+  const source = dbModule.createSourceItem("Need to send Sarah the pricing notes.", "text");
+  const memory = dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "commitment",
+    content: "Send Sarah the pricing notes",
+    confidence: 92,
+    rationale: "The source says Ty needs to send Sarah notes."
+  });
+
+  dbModule.updateMemoryStatus(memory.id, "dismissed");
+
+  assert.deepEqual(recall("What am I forgetting?"), []);
+});
+
 test("recall fetches memories for recent sources in one batch", async () => {
   const { recall } = await import(`../lib/recall.ts?batch=${Date.now()}-${Math.random()}`);
   const createdAt = "2026-06-16T12:00:00.000Z";
