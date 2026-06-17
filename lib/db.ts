@@ -380,6 +380,16 @@ export function updateMemoryContent(memoryId: number, content: string): Memory {
   return mapMemory(row);
 }
 
+export function deleteMemory(memoryId: number): boolean {
+  if (!Number.isInteger(memoryId) || memoryId < 1) {
+    throw new Error("Memory requires a valid id.");
+  }
+
+  const result = getDb().prepare("DELETE FROM memories WHERE id = ?").run(memoryId);
+
+  return result.changes > 0;
+}
+
 export function updateCommitmentStatus(memoryId: number, status: MemoryStatus): Memory | null {
   if (!Number.isInteger(memoryId) || memoryId < 1) {
     throw new Error("Memory requires a valid id.");

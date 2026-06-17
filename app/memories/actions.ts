@@ -1,6 +1,6 @@
 "use server";
 
-import { updateMemoryContent, updateMemoryStatus, type MemoryStatus } from "@/lib/db";
+import { deleteMemory, updateMemoryContent, updateMemoryStatus, type MemoryStatus } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -34,14 +34,18 @@ function readReturnTo(formData: FormData): string {
   return typeof rawReturnTo === "string" && allowedReturnPaths.has(rawReturnTo) ? rawReturnTo : "/inbox";
 }
 
-export async function updateReviewedMemory(formData: FormData): Promise<void> {
-  const returnTo = readReturnTo(formData);
-  updateMemoryStatus(readMemoryId(formData), readStatus(formData));
-
+function revalidateMemoryViews() {
   revalidatePath("/capture");
   revalidatePath("/inbox");
   revalidatePath("/recall");
   revalidatePath("/open-loops");
+}
+
+export async function updateReviewedMemory(formData: FormData): Promise<void> {
+  const returnTo = readReturnTo(formData);
+  updateMemoryStatus(readMemoryId(formData), readStatus(formData));
+
+  revalidateMemoryViews();
   redirect(`${returnTo}?memoryUpdated=1`);
 }
 
@@ -55,9 +59,14 @@ export async function correctMemoryContent(formData: FormData): Promise<void> {
 
   updateMemoryContent(readMemoryId(formData), rawContent);
 
-  revalidatePath("/capture");
-  revalidatePath("/inbox");
-  revalidatePath("/recall");
-  revalidatePath("/open-loops");
+  revalidateMemoryViews();
+  redirect(`${returnTo}?memoryUpdated=1`);
+}
+
+export async function deleteReviewedMemory(formData: FormData): Promise<void> {
+  const returnTo = readReturnTo(formData);
+  deleteMemory(readMemoryId(formData));
+
+  revalidateMemoryViews();
   redirect(`${returnTo}?memoryUpdated=1`);
 }

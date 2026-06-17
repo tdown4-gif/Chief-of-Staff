@@ -153,6 +153,30 @@ test("memory content correction rejects blank content and missing memories", asy
   assert.equal(dbModule.listMemoriesForSource(source.id)[0].content, "renewal reminder");
 });
 
+test("proposed memories can be deleted without deleting the raw source", async () => {
+  const { dbModule } = await importDbWithTempPath();
+  const source = dbModule.createSourceItem("Met Mike. Insurance agency owner.", "text");
+  const memory = dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "person",
+    content: "Mike",
+    confidence: 84,
+    rationale: "The source says Ty met Mike."
+  });
+
+  assert.equal(dbModule.deleteMemory(memory.id), true);
+  assert.equal(dbModule.deleteMemory(memory.id), false);
+  assert.deepEqual(dbModule.listMemoriesForSource(source.id), []);
+  assert.equal(dbModule.listRecentSourceItems(1)[0].content, "Met Mike. Insurance agency owner.");
+});
+
+test("memory deletion rejects invalid ids", async () => {
+  const { dbModule } = await importDbWithTempPath();
+
+  assert.throws(() => dbModule.deleteMemory(0), /Memory requires a valid id/);
+  assert.throws(() => dbModule.deleteMemory(Number.NaN), /Memory requires a valid id/);
+});
+
 test("multi-memory creation is atomic when a later draft is invalid", async () => {
   const { dbModule } = await importDbWithTempPath();
   const source = dbModule.createSourceItem("Met Mike. Idea: renewal reminder.", "text");

@@ -1,6 +1,6 @@
 import type { MemoriesBySourceId, Memory, SourceItem } from "@/lib/db";
 import { getMemoryReviewState } from "@/lib/memory-review";
-import { correctMemoryContent, updateReviewedMemory } from "@/app/memories/actions";
+import { correctMemoryContent, deleteReviewedMemory, updateReviewedMemory } from "@/app/memories/actions";
 
 const dateFormatter = new Intl.DateTimeFormat("en", {
   dateStyle: "medium",
@@ -85,6 +85,11 @@ export function CaptureList({
                         <input name="status" type="hidden" value={reviewState.nextAction.status} />
                         <input name="returnTo" type="hidden" value={returnTo} />
                         <button className="secondary-button" type="submit">{reviewState.nextAction.label}</button>
+                      </form>
+                      <form className="memory-review-form" action={deleteReviewedMemory}>
+                        <input name="memoryId" type="hidden" value={memory.id} />
+                        <input name="returnTo" type="hidden" value={returnTo} />
+                        <button className="danger-button" type="submit">Delete memory</button>
                       </form>
                     </div>
                   );

@@ -61,7 +61,8 @@ select {
 
 .nav-link,
 .button,
-.secondary-button {
+.secondary-button,
+.danger-button {
   border-radius: 8px;
   padding: 10px 14px;
   border: 1px solid var(--line);
@@ -83,6 +84,15 @@ select {
   display: inline-flex;
   justify-content: center;
   background: var(--brand-soft);
+}
+
+.danger-button {
+  display: inline-flex;
+  justify-content: center;
+  border-color: #fecaca;
+  background: #fff1f2;
+  color: var(--danger);
+  cursor: pointer;
 }
 
 .hero {
@@ -288,7 +298,8 @@ p {
 }
 
 .memory-review-form .secondary-button,
-.memory-correction-form .secondary-button {
+.memory-correction-form .secondary-button,
+.memory-review-form .danger-button {
   padding: 8px 12px;
 }
 
@@ -382,6 +393,7 @@ p {
 
   .button,
   .secondary-button,
+  .danger-button,
   .nav-link,
   .recall-select {
     width: 100%;
