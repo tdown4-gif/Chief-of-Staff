@@ -1,44 +1,104 @@
 import Link from "next/link";
+import { confidenceBadgeClass, getExtractionConfidence } from "@/lib/confidence";
+import { listMemoriesNeedingReview, listOpenCommitments, listRecentSourceItems } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+
+const dateFormatter = new Intl.DateTimeFormat("en", {
+  dateStyle: "medium",
+  timeStyle: "short"
+});
+
+function snippet(content: string, maxLength = 150): string {
+  const normalized = content.replace(/\s+/g, " ").trim();
+  return normalized.length <= maxLength ? normalized : `${normalized.slice(0, maxLength)}...`;
+}
 
 export default function Home() {
+  const recentCaptures = listRecentSourceItems(5);
+  const openLoops = listOpenCommitments(5);
+  const memoriesNeedingReview = listMemoriesNeedingReview(5);
+
   return (
-    <main className="shell">
+    <main className="shell daily-shell">
       <nav className="nav" aria-label="Main navigation">
-        <strong>Trusted External Memory</strong>
+        <strong>Memory</strong>
         <div className="nav-links">
           <Link className="nav-link" href="/capture">Capture</Link>
-          <Link className="nav-link" href="/inbox">Inbox</Link>
           <Link className="nav-link" href="/recall">Recall</Link>
-          <Link className="nav-link" href="/open-loops">Open loops</Link>
+          <Link className="nav-link" href="/inbox">Inbox</Link>
         </div>
       </nav>
 
-      <section className="hero">
-        <p className="section-label">Trusted External Memory v0</p>
-        <h1>One inbox for messy context.</h1>
-        <p>
-          Chief of Staff is not being built yet. This version only proves the memory foundation:
-          capture raw thoughts quickly, preserve the source, and make recent context visible.
-        </p>
-        <div className="nav-links">
-          <Link className="button" href="/capture">Capture a thought</Link>
-          <Link className="secondary-button" href="/recall">Search memory</Link>
-        </div>
+      <section className="daily-hero" aria-label="Quick actions">
+        <Link className="button daily-capture-button" href="/capture">Capture a thought</Link>
+        <Link className="secondary-button daily-recall-button" href="/recall">Search memory</Link>
       </section>
 
-      <section className="grid" aria-label="V0 scope">
-        <div className="card">
-          <h2>Capture</h2>
-          <p>Fast text capture from laptop or phone with no folders, tags, or organization decisions.</p>
-        </div>
-        <div className="card">
-          <h2>Recall</h2>
-          <p>Search proposed memories and raw captures with source snippets attached to every result.</p>
-        </div>
-        <div className="card">
-          <h2>Defer</h2>
-          <p>No travel, gifts, CRM, dashboards, calendar management, or proactive research in v0.</p>
-        </div>
+      <section className="daily-grid" aria-label="Daily memory overview">
+        <article className="daily-panel">
+          <div className="daily-panel-header">
+            <h2>Recent captures</h2>
+            <Link href="/inbox">View all</Link>
+          </div>
+          {recentCaptures.length > 0 ? (
+            <div className="daily-list">
+              {recentCaptures.map((item) => (
+                <Link className="daily-row" href="/inbox" key={item.id}>
+                  <span>{snippet(item.content)}</span>
+                  <small>{dateFormatter.format(new Date(item.createdAt))}</small>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-state">No captures yet.</p>
+          )}
+        </article>
+
+        <article className="daily-panel">
+          <div className="daily-panel-header">
+            <h2>Open loops</h2>
+            <Link href="/open-loops">Review</Link>
+          </div>
+          {openLoops.length > 0 ? (
+            <div className="daily-list">
+              {openLoops.map(({ memory, source }) => (
+                <Link className="daily-row" href="/open-loops" key={memory.id}>
+                  <span>{memory.content}</span>
+                  <small>Source #{source.id}</small>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-state">No active commitments found.</p>
+          )}
+        </article>
+
+        <article className="daily-panel">
+          <div className="daily-panel-header">
+            <h2>Needs review</h2>
+            <Link href="/inbox">Open inbox</Link>
+          </div>
+          {memoriesNeedingReview.length > 0 ? (
+            <div className="daily-list">
+              {memoriesNeedingReview.map(({ memory, source }) => {
+                const confidence = getExtractionConfidence(memory);
+
+                return (
+                  <Link className="daily-row" href="/inbox" key={memory.id}>
+                    <span>{memory.content}</span>
+                    <small>
+                      <span className={confidenceBadgeClass(confidence.tone)}>{confidence.label}</span>
+                      <span> Source #{source.id}</span>
+                    </small>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="empty-state">No memories need review.</p>
+          )}
+        </article>
       </section>
     </main>
   );

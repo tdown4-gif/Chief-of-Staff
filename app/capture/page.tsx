@@ -6,7 +6,7 @@ import { listMemoriesForSources, listRecentSourceItems } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 type CapturePageProps = {
-  searchParams: Promise<{ error?: string; memoryUpdated?: string }>;
+  searchParams: Promise<{ captured?: string; error?: string; memoryUpdated?: string }>;
 };
 
 export default async function CapturePage({ searchParams }: CapturePageProps) {
@@ -22,27 +22,20 @@ export default async function CapturePage({ searchParams }: CapturePageProps) {
   return (
     <main className="shell capture-shell">
       <nav className="nav" aria-label="Main navigation">
-        <Link href="/">Trusted External Memory</Link>
+        <Link href="/">Memory</Link>
         <div className="nav-links">
+          <Link className="nav-link" href="/">Home</Link>
           <Link className="nav-link" href="/inbox">Inbox</Link>
           <Link className="nav-link" href="/recall">Recall</Link>
           <Link className="nav-link" href="/open-loops">Open loops</Link>
         </div>
       </nav>
 
-      <section className="hero capture-hero">
-        <p className="section-label">Universal inbox</p>
-        <h1>Capture now.</h1>
-        <p>
-          Save the raw source exactly as it arrives. No folders, tags, CRM fields, or dashboard work.
-        </p>
+      <section aria-label="Capture form">
+        <CaptureForm captured={params.captured === "1"} error={error} />
       </section>
 
-      <section style={{ marginTop: 18 }} aria-label="Capture form">
-        <CaptureForm error={error} />
-      </section>
-
-      <section style={{ marginTop: 28 }} aria-label="Recent captures">
+      <section className="daily-section" aria-label="Recent captures">
         <h2>Recent captures</h2>
         {params.memoryUpdated ? <p className="hint">Memory review saved.</p> : null}
         <CaptureList items={recentCaptures} memoriesBySource={memoriesBySource} returnTo="/capture" />

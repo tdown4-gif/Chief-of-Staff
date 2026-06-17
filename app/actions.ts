@@ -1,6 +1,6 @@
 "use server";
 
-import { normalizeCaptureSourceType, validateCaptureContent } from "@/lib/capture";
+import { CAPTURE_SUCCESS_REDIRECT_PATH, validateCaptureContent } from "@/lib/capture";
 import { createSourceItem } from "@/lib/db";
 import { extractAndStoreMemoriesForSource } from "@/lib/extraction";
 import { revalidatePath } from "next/cache";
@@ -19,7 +19,7 @@ export async function saveCapture(formData: FormData): Promise<void> {
     redirect(`/capture?error=${validation.error}`);
   }
 
-  const source = createSourceItem(content, normalizeCaptureSourceType(formData.get("sourceType")));
+  const source = createSourceItem(content, "text");
   const { error } = await extractAndStoreMemoriesForSource(source);
   if (error) {
     console.error("extraction failed for source", source.id, error);
@@ -27,5 +27,6 @@ export async function saveCapture(formData: FormData): Promise<void> {
 
   revalidatePath("/capture");
   revalidatePath("/inbox");
-  redirect("/inbox?captured=1");
+  revalidatePath("/");
+  redirect(CAPTURE_SUCCESS_REDIRECT_PATH);
 }

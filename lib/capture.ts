@@ -1,4 +1,5 @@
 export const MAX_CAPTURE_CHARACTERS = 100000;
+export const CAPTURE_SUCCESS_REDIRECT_PATH = "/capture?captured=1";
 export const SOURCE_TYPES = ["text", "note", "link", "document", "contact"] as const;
 
 export type CaptureSourceType = (typeof SOURCE_TYPES)[number];

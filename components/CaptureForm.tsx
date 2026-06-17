@@ -1,22 +1,10 @@
 import { saveCapture } from "@/app/actions";
-import { MAX_CAPTURE_CHARACTERS, SOURCE_TYPES } from "@/lib/capture";
+import { MAX_CAPTURE_CHARACTERS } from "@/lib/capture";
 
-export function CaptureForm({ error }: { error?: string }) {
+export function CaptureForm({ error, captured }: { error?: string; captured?: boolean }) {
   return (
     <form action={saveCapture} className="capture-card">
-      <label htmlFor="content">
-        <strong>Messy thought, note, person, idea, or commitment</strong>
-      </label>
-      <div className="capture-field">
-        <label htmlFor="sourceType">Source type</label>
-        <select className="capture-select" defaultValue="text" id="sourceType" name="sourceType">
-          {SOURCE_TYPES.map((sourceType) => (
-            <option key={sourceType} value={sourceType}>
-              {sourceType}
-            </option>
-          ))}
-        </select>
-      </div>
+      <label className="capture-label" htmlFor="content">Capture</label>
       <textarea
         id="content"
         name="content"
@@ -27,12 +15,13 @@ export function CaptureForm({ error }: { error?: string }) {
         minLength={1}
         maxLength={MAX_CAPTURE_CHARACTERS}
         spellCheck
-        placeholder="Example: Need to follow up with Sarah about pricing after the demo. Also had an idea for insurance agencies: remember renewal dates and suggest outreach."
+        placeholder="Type or paste anything worth remembering..."
       />
+      {captured ? <p className="success">Saved. Ready for the next thought.</p> : null}
       {error ? <p className="error">{error}</p> : null}
       <div className="capture-actions">
-        <p className="hint">No folders. No tags. Raw source preserved.</p>
-        <button className="button" type="submit">Save to inbox</button>
+        <p className="hint">No folders. No tags. Just capture.</p>
+        <button className="button capture-save-button" type="submit">Save</button>
       </div>
     </form>
   );

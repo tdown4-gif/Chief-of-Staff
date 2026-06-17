@@ -520,6 +520,35 @@ export function listOpenCommitments(limit = 50): MemoryWithSource[] {
   return rows.map(mapMemoryWithSource);
 }
 
+export function listMemoriesNeedingReview(limit = 10): MemoryWithSource[] {
+  const safeLimit = Math.min(Math.max(limit, 1), 100);
+  const rows = getDb()
+    .prepare(`
+      SELECT
+        m.id AS memory_id,
+        m.source_item_id,
+        m.kind,
+        m.content AS memory_content,
+        m.confidence,
+        m.rationale,
+        m.metadata_json,
+        m.status,
+        m.created_at AS memory_created_at,
+        s.id AS source_id,
+        s.content AS source_content,
+        s.source_type,
+        s.created_at AS source_created_at
+      FROM memories m
+      JOIN source_items s ON s.id = m.source_item_id
+      WHERE m.status = 'needs_review'
+      ORDER BY datetime(m.created_at) DESC, m.id DESC
+      LIMIT ?
+    `)
+    .all(safeLimit) as MemoryWithSourceRow[];
+
+  return rows.map(mapMemoryWithSource);
+}
+
 export function createRecallFeedback(input: CreateRecallFeedbackInput): RecallFeedback {
   const query = input.query.trim();
   const note = input.note?.trim() || null;
