@@ -266,7 +266,29 @@ p {
   margin: 4px 0 0;
 }
 
-.memory-review-form .secondary-button {
+.memory-correction-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.memory-correction-input {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 11px;
+  color: var(--ink);
+  background: #ffffff;
+}
+
+.memory-correction-input:focus {
+  outline: 3px solid #dbeafe;
+  border-color: #93c5fd;
+}
+
+.memory-review-form .secondary-button,
+.memory-correction-form .secondary-button {
   padding: 8px 12px;
 }
 
@@ -367,8 +389,13 @@ p {
 
   .open-loop-actions,
   .open-loop-actions form,
-  .memory-review-form {
+  .memory-review-form,
+  .memory-correction-form {
     width: 100%;
+  }
+
+  .memory-correction-form {
+    grid-template-columns: 1fr;
   }
 
   .capture-card {

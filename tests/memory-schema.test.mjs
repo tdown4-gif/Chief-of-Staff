@@ -114,6 +114,45 @@ test("memory creation rejects empty rationale", async () => {
   assert.equal(dbModule.listMemoriesForSource(source.id).length, 0);
 });
 
+test("memory content can be corrected without losing provenance", async () => {
+  const { dbModule } = await importDbWithTempPath();
+  const source = dbModule.createSourceItem("Met Mike. Insurance agency owner.", "text");
+  const memory = dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "person",
+    content: "Mike Insurance",
+    confidence: 84,
+    rationale: "The source says Ty met Mike."
+  });
+
+  const updated = dbModule.updateMemoryContent(memory.id, "  Mike  ");
+
+  assert.equal(updated.id, memory.id);
+  assert.equal(updated.sourceItemId, source.id);
+  assert.equal(updated.kind, "person");
+  assert.equal(updated.content, "Mike");
+  assert.equal(updated.confidence, 84);
+  assert.equal(updated.rationale, "The source says Ty met Mike.");
+  assert.equal(updated.status, "active");
+  assert.equal(dbModule.listMemoriesForSource(source.id)[0].content, "Mike");
+});
+
+test("memory content correction rejects blank content and missing memories", async () => {
+  const { dbModule } = await importDbWithTempPath();
+  const source = dbModule.createSourceItem("Idea: renewal reminder.", "text");
+  const memory = dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "idea",
+    content: "renewal reminder",
+    confidence: 88,
+    rationale: "The source uses an explicit idea label."
+  });
+
+  assert.throws(() => dbModule.updateMemoryContent(memory.id, "   "), /Memory content cannot be empty/);
+  assert.throws(() => dbModule.updateMemoryContent(9999, "new content"), /Memory not found/);
+  assert.equal(dbModule.listMemoriesForSource(source.id)[0].content, "renewal reminder");
+});
+
 test("multi-memory creation is atomic when a later draft is invalid", async () => {
   const { dbModule } = await importDbWithTempPath();
   const source = dbModule.createSourceItem("Met Mike. Idea: renewal reminder.", "text");

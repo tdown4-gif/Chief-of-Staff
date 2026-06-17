@@ -1,6 +1,6 @@
 "use server";
 
-import { updateMemoryStatus, type MemoryStatus } from "@/lib/db";
+import { updateMemoryContent, updateMemoryStatus, type MemoryStatus } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -37,6 +37,23 @@ function readReturnTo(formData: FormData): string {
 export async function updateReviewedMemory(formData: FormData): Promise<void> {
   const returnTo = readReturnTo(formData);
   updateMemoryStatus(readMemoryId(formData), readStatus(formData));
+
+  revalidatePath("/capture");
+  revalidatePath("/inbox");
+  revalidatePath("/recall");
+  revalidatePath("/open-loops");
+  redirect(`${returnTo}?memoryUpdated=1`);
+}
+
+export async function correctMemoryContent(formData: FormData): Promise<void> {
+  const returnTo = readReturnTo(formData);
+  const rawContent = formData.get("content");
+
+  if (typeof rawContent !== "string") {
+    throw new Error("Memory correction requires content.");
+  }
+
+  updateMemoryContent(readMemoryId(formData), rawContent);
 
   revalidatePath("/capture");
   revalidatePath("/inbox");

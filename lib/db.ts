@@ -353,6 +353,33 @@ export function updateMemoryStatus(memoryId: number, status: MemoryStatus): Memo
   return mapMemory(row);
 }
 
+export function updateMemoryContent(memoryId: number, content: string): Memory {
+  if (!Number.isInteger(memoryId) || memoryId < 1) {
+    throw new Error("Memory requires a valid id.");
+  }
+
+  const normalizedContent = content.trim().replace(/\s+/g, " ");
+  if (!normalizedContent) {
+    throw new Error("Memory content cannot be empty.");
+  }
+
+  const database = getDb();
+  database.prepare("UPDATE memories SET content = ? WHERE id = ?").run(normalizedContent, memoryId);
+  const row = database
+    .prepare(`
+      SELECT id, source_item_id, kind, content, confidence, rationale, metadata_json, status, created_at
+      FROM memories
+      WHERE id = ?
+    `)
+    .get(memoryId) as MemoryRow | undefined;
+
+  if (!row) {
+    throw new Error("Memory not found.");
+  }
+
+  return mapMemory(row);
+}
+
 export function updateCommitmentStatus(memoryId: number, status: MemoryStatus): Memory | null {
   if (!Number.isInteger(memoryId) || memoryId < 1) {
     throw new Error("Memory requires a valid id.");
