@@ -174,6 +174,7 @@ Extracted memory records that point back to raw source.
 - `confidence`
 - `rationale`
 - `metadata_json`
+- `status`
 - `created_at`
 
 Allowed `kind` values are:
@@ -184,6 +185,14 @@ Allowed `kind` values are:
 - `commitment`
 
 This deliberately avoids separate person, project, idea, and commitment modules for v0. Those object types are represented by `memories.kind` until extraction and recall prove that more structure is needed.
+
+`status` is intentionally minimal:
+
+- `active`
+- `done`
+- `dismissed`
+
+It currently supports the basic open-loops view for commitment memories only. This is not a full memory lifecycle, task system, or workflow engine.
 
 ### extraction v0
 
@@ -214,3 +223,9 @@ Recall results include:
 - a simple match score used only for ordering
 
 This is intentionally not a chat system, task system, dashboard, semantic search service, or proactive recommendation layer. The only purpose is to prove that Ty can recover captured context with visible source proof.
+
+### open loops v0
+
+The current open-loops layer does not add a task table. It lists active `commitment` memories with source proof and confidence, then lets Ty mark a commitment `done` or `dismissed` by updating `memories.status`.
+
+This keeps open loops tied to source-backed memory instead of becoming task management.

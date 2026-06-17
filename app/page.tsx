@@ -9,6 +9,7 @@ export default function Home() {
           <Link className="nav-link" href="/capture">Capture</Link>
           <Link className="nav-link" href="/inbox">Inbox</Link>
           <Link className="nav-link" href="/recall">Recall</Link>
+          <Link className="nav-link" href="/open-loops">Open loops</Link>
         </div>
       </nav>
 

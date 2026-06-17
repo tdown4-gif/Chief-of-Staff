@@ -289,6 +289,17 @@ p {
   border-top: 1px solid var(--line);
 }
 
+.open-loop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.open-loop-actions form {
+  margin: 0;
+}
+
 .empty-state {
   border: 1px dashed #cbd5e1;
   border-radius: 8px;
@@ -334,6 +345,11 @@ p {
   .button,
   .secondary-button,
   .nav-link {
+    width: 100%;
+  }
+
+  .open-loop-actions,
+  .open-loop-actions form {
     width: 100%;
   }
 

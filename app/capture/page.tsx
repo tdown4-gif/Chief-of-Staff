@@ -26,6 +26,7 @@ export default async function CapturePage({ searchParams }: CapturePageProps) {
         <div className="nav-links">
           <Link className="nav-link" href="/inbox">Inbox</Link>
           <Link className="nav-link" href="/recall">Recall</Link>
+          <Link className="nav-link" href="/open-loops">Open loops</Link>
         </div>
       </nav>
 

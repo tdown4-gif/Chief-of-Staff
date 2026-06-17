@@ -10,6 +10,7 @@ export type SourceItem = {
 };
 
 export type MemoryKind = "person" | "project" | "idea" | "commitment";
+export type MemoryStatus = "active" | "done" | "dismissed";
 
 export type Memory = {
   id: number;
@@ -19,6 +20,7 @@ export type Memory = {
   confidence: number;
   rationale: string;
   metadataJson: string | null;
+  status: MemoryStatus;
   createdAt: string;
 };
 
@@ -29,9 +31,14 @@ export type CreateMemoryInput = {
   confidence: number;
   rationale: string;
   metadataJson?: string | null;
+  status?: MemoryStatus;
 };
 
 export type MemoriesBySourceId = Record<number, Memory[]>;
+export type MemoryWithSource = {
+  memory: Memory;
+  source: SourceItem;
+};
 
 type SourceItemRow = {
   id: number;
@@ -48,10 +55,28 @@ type MemoryRow = {
   confidence: number;
   rationale: string;
   metadata_json: string | null;
+  status: MemoryStatus;
   created_at: string;
 };
 
+type MemoryWithSourceRow = {
+  memory_id: number;
+  source_item_id: number;
+  kind: MemoryKind;
+  memory_content: string;
+  confidence: number;
+  rationale: string;
+  metadata_json: string | null;
+  status: MemoryStatus;
+  memory_created_at: string;
+  source_id: number;
+  source_content: string;
+  source_type: string;
+  source_created_at: string;
+};
+
 const dataDir = path.join(process.cwd(), "data");
+const memoryStatuses = new Set<MemoryStatus>(["active", "done", "dismissed"]);
 
 let db: Database.Database | undefined;
 let currentDbPath: string | undefined;
@@ -91,6 +116,7 @@ function getDb() {
         confidence INTEGER NOT NULL CHECK (confidence >= 0 AND confidence <= 100),
         rationale TEXT NOT NULL DEFAULT '',
         metadata_json TEXT,
+        status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'done', 'dismissed')),
         created_at TEXT NOT NULL,
         FOREIGN KEY (source_item_id) REFERENCES source_items(id) ON DELETE CASCADE
       );
@@ -98,6 +124,14 @@ function getDb() {
       CREATE INDEX IF NOT EXISTS idx_memories_source_item_id ON memories(source_item_id);
       CREATE INDEX IF NOT EXISTS idx_memories_kind ON memories(kind);
     `);
+
+    const memoryColumns = db.prepare("PRAGMA table_info(memories)").all() as Array<{ name: string }>;
+    if (!memoryColumns.some((column) => column.name === "status")) {
+      db.exec(`
+        ALTER TABLE memories
+        ADD COLUMN status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'done', 'dismissed'))
+      `);
+    }
   }
 
   return db;
@@ -121,7 +155,30 @@ function mapMemory(row: MemoryRow): Memory {
     confidence: row.confidence,
     rationale: row.rationale,
     metadataJson: row.metadata_json,
+    status: row.status,
     createdAt: row.created_at
+  };
+}
+
+function mapMemoryWithSource(row: MemoryWithSourceRow): MemoryWithSource {
+  return {
+    memory: mapMemory({
+      id: row.memory_id,
+      source_item_id: row.source_item_id,
+      kind: row.kind,
+      content: row.memory_content,
+      confidence: row.confidence,
+      rationale: row.rationale,
+      metadata_json: row.metadata_json,
+      status: row.status,
+      created_at: row.memory_created_at
+    }),
+    source: mapSourceItem({
+      id: row.source_id,
+      content: row.source_content,
+      source_type: row.source_type,
+      created_at: row.source_created_at
+    })
   };
 }
 
@@ -176,6 +233,16 @@ function validateMemoryInput(input: CreateMemoryInput) {
   if (!Number.isInteger(input.confidence) || input.confidence < 0 || input.confidence > 100) {
     throw new Error("Memory confidence must be an integer from 0 to 100.");
   }
+
+  if (input.status && !memoryStatuses.has(input.status)) {
+    throw new Error("Memory status must be active, done, or dismissed.");
+  }
+}
+
+function validateMemoryStatus(status: MemoryStatus) {
+  if (!memoryStatuses.has(status)) {
+    throw new Error("Memory status must be active, done, or dismissed.");
+  }
 }
 
 function insertMemory(database: Database.Database, input: CreateMemoryInput): Memory {
@@ -184,8 +251,8 @@ function insertMemory(database: Database.Database, input: CreateMemoryInput): Me
   const createdAt = new Date().toISOString();
   const result = database
     .prepare(`
-      INSERT INTO memories (source_item_id, kind, content, confidence, rationale, metadata_json, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO memories (source_item_id, kind, content, confidence, rationale, metadata_json, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `)
     .run(
       input.sourceItemId,
@@ -194,6 +261,7 @@ function insertMemory(database: Database.Database, input: CreateMemoryInput): Me
       input.confidence,
       input.rationale,
       input.metadataJson ?? null,
+      input.status ?? "active",
       createdAt
     );
 
@@ -205,6 +273,7 @@ function insertMemory(database: Database.Database, input: CreateMemoryInput): Me
     confidence: input.confidence,
     rationale: input.rationale,
     metadataJson: input.metadataJson ?? null,
+    status: input.status ?? "active",
     createdAt
   };
 }
@@ -225,7 +294,7 @@ export function createMemories(inputs: CreateMemoryInput[]): Memory[] {
 export function listMemoriesForSource(sourceItemId: number): Memory[] {
   const rows = getDb()
     .prepare(`
-      SELECT id, source_item_id, kind, content, confidence, rationale, metadata_json, created_at
+      SELECT id, source_item_id, kind, content, confidence, rationale, metadata_json, status, created_at
       FROM memories
       WHERE source_item_id = ?
       ORDER BY id DESC
@@ -246,7 +315,7 @@ export function listMemoriesForSources(sourceItemIds: number[]): MemoriesBySourc
   const placeholders = safeIds.map(() => "?").join(", ");
   const rows = getDb()
     .prepare(`
-      SELECT id, source_item_id, kind, content, confidence, rationale, metadata_json, created_at
+      SELECT id, source_item_id, kind, content, confidence, rationale, metadata_json, status, created_at
       FROM memories
       WHERE source_item_id IN (${placeholders})
       ORDER BY source_item_id ASC, id DESC
@@ -259,4 +328,56 @@ export function listMemoriesForSources(sourceItemIds: number[]): MemoriesBySourc
   }
 
   return memoriesBySource;
+}
+
+export function updateMemoryStatus(memoryId: number, status: MemoryStatus): Memory {
+  if (!Number.isInteger(memoryId) || memoryId < 1) {
+    throw new Error("Memory requires a valid id.");
+  }
+
+  validateMemoryStatus(status);
+  const database = getDb();
+  database.prepare("UPDATE memories SET status = ? WHERE id = ?").run(status, memoryId);
+  const row = database
+    .prepare(`
+      SELECT id, source_item_id, kind, content, confidence, rationale, metadata_json, status, created_at
+      FROM memories
+      WHERE id = ?
+    `)
+    .get(memoryId) as MemoryRow | undefined;
+
+  if (!row) {
+    throw new Error("Memory not found.");
+  }
+
+  return mapMemory(row);
+}
+
+export function listOpenCommitments(limit = 50): MemoryWithSource[] {
+  const safeLimit = Math.min(Math.max(limit, 1), 100);
+  const rows = getDb()
+    .prepare(`
+      SELECT
+        m.id AS memory_id,
+        m.source_item_id,
+        m.kind,
+        m.content AS memory_content,
+        m.confidence,
+        m.rationale,
+        m.metadata_json,
+        m.status,
+        m.created_at AS memory_created_at,
+        s.id AS source_id,
+        s.content AS source_content,
+        s.source_type,
+        s.created_at AS source_created_at
+      FROM memories m
+      JOIN source_items s ON s.id = m.source_item_id
+      WHERE m.kind = 'commitment' AND m.status = 'active'
+      ORDER BY datetime(m.created_at) DESC, m.id DESC
+      LIMIT ?
+    `)
+    .all(safeLimit) as MemoryWithSourceRow[];
+
+  return rows.map(mapMemoryWithSource);
 }
