@@ -204,7 +204,7 @@ export function createSourceItem(content: string, sourceType = "text"): SourceIt
 }
 
 export function listRecentSourceItems(limit = 20): SourceItem[] {
-  const safeLimit = Math.min(Math.max(limit, 1), 100);
+  const safeLimit = Math.min(Math.max(limit, 1), 1000);
   const rows = getDb()
     .prepare("SELECT id, content, source_type, created_at FROM source_items ORDER BY datetime(created_at) DESC, id DESC LIMIT ?")
     .all(safeLimit) as SourceItemRow[];

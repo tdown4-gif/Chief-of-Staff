@@ -29,3 +29,17 @@ test("long text captures are accepted by v0 validation", async () => {
   assert.deepEqual(validateCaptureContent(" \n\t "), { ok: false, error: "empty" });
   assert.deepEqual(validateCaptureContent("x".repeat(MAX_CAPTURE_CHARACTERS + 1)), { ok: false, error: "too-long" });
 });
+
+test("source listing supports a thousand-item recall window", async () => {
+  const { createSourceItem, listRecentSourceItems } = await importWithTempDb("../lib/db.ts");
+
+  for (let index = 1; index <= 105; index += 1) {
+    createSourceItem(`Capture ${index}`);
+  }
+
+  const items = listRecentSourceItems(1000);
+
+  assert.equal(items.length, 105);
+  assert.equal(items[0].content, "Capture 105");
+  assert.equal(items.at(-1)?.content, "Capture 1");
+});

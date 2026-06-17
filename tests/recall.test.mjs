@@ -118,6 +118,46 @@ test("recall fetches memories for recent sources in one batch", async () => {
   assert.equal(results[0].memory?.content, "Mike");
 });
 
+test("recall scans a thousand recent captures by default", async () => {
+  const { recall } = await import(`../lib/recall.ts?window=${Date.now()}-${Math.random()}`);
+  const createdAt = "2026-06-16T12:00:00.000Z";
+  let requestedLimit = 0;
+
+  const results = recall("deep archive", 10, {
+    listRecentSourceItems: (limit) => {
+      requestedLimit = limit ?? 0;
+      return [
+        {
+          id: 1000,
+          content: "Deep archive note about the renewal workflow.",
+          sourceType: "text",
+          createdAt
+        }
+      ];
+    },
+    listMemoriesForSources: () => ({ 1000: [] })
+  });
+
+  assert.equal(requestedLimit, 1000);
+  assert.equal(results.length, 1);
+  assert.equal(results[0].source.id, 1000);
+});
+
+test("recall can recover source matches beyond the first hundred captures", async () => {
+  const dbModule = await importWithTempDb("../lib/db.ts");
+  const { recall } = await import("../lib/recall.ts");
+
+  dbModule.createSourceItem("Needle note: Zenith renewal workflow belongs in the trusted memory layer.", "text");
+  for (let index = 1; index <= 120; index += 1) {
+    dbModule.createSourceItem(`Routine capture ${index}. Nothing about the target phrase.`, "text");
+  }
+
+  const results = recall("Zenith renewal workflow");
+
+  assert.equal(results.length, 1);
+  assert.match(results[0].sourceSnippet, /Zenith renewal workflow/);
+});
+
 test("recall does not surface dismissed memories by default", async () => {
   const dbModule = await importWithTempDb("../lib/db.ts");
   const { recall } = await import("../lib/recall.ts");

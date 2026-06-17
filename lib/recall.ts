@@ -31,6 +31,8 @@ const defaultRecallDependencies: RecallDependencies = {
   listMemoriesForSources
 };
 
+const RECALL_SOURCE_WINDOW = 1000;
+
 const STOP_WORDS = new Set([
   "a",
   "about",
@@ -139,7 +141,7 @@ export function recall(
   }
 
   const normalizedOptions = normalizeOptions(options);
-  const sources = dependencies.listRecentSourceItems(100);
+  const sources = dependencies.listRecentSourceItems(RECALL_SOURCE_WINDOW);
   const memoriesBySource = dependencies.listMemoriesForSources(sources.map((source) => source.id));
   const results = sources.flatMap<RecallResult>((source) => {
     const memories = memoriesBySource[source.id] ?? [];
