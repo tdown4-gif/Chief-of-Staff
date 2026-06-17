@@ -110,6 +110,7 @@ export function evaluateHoldoutRecall({ recall }) {
         kind: result.memory?.kind ?? "source",
         resultType: result.resultType,
         confidence: result.memory?.confidence ?? null,
+        status: result.memory?.status ?? null,
         memory: result.memory?.content ?? null,
         sourceSnippet: result.sourceSnippet
       }))

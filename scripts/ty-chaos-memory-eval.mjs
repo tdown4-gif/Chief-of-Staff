@@ -10,8 +10,14 @@ process.env.DATABASE_URL = `file:${path.join(dir, "chaos.db")}`;
 const dbModule = await import(`../lib/db.ts?chaos=${cacheBuster}`);
 const extractionModule = await import(`../lib/extraction.ts?chaos=${cacheBuster}`);
 const recallModule = await import(`../lib/recall.ts?chaos=${cacheBuster}`);
+const confidenceModule = await import(`../lib/confidence.ts?chaos=${cacheBuster}`);
 const seeded = await seedTyChaosDataset({ dbModule, extractionModule });
 const report = evaluateTyChaosRecall({ recall: recallModule.recall, memories: seeded.memories });
+
+function formatExtractionConfidence(memorySummary) {
+  const confidence = confidenceModule.getExtractionConfidence(memorySummary);
+  return `${confidence.label} - ${confidence.explanation}`;
+}
 
 function printIssueList(title, items, formatter) {
   console.log(`${title}: ${items.length}`);
@@ -43,7 +49,7 @@ printIssueList("Missing context", report.missingContext, (item) => `${item.query
 printIssueList(
   "Weak confidence scores",
   report.weakConfidenceScores,
-  (item) => `#${item.sourceItemId} ${item.kind} ${item.confidence}% "${item.content}"`
+  (item) => `#${item.sourceItemId} ${item.kind} ${formatExtractionConfidence(item)} "${item.content}"`
 );
 
 for (const queryReport of report.queryReports) {
@@ -52,7 +58,9 @@ for (const queryReport of report.queryReports) {
     `Results: ${queryReport.resultCount} | misses ${queryReport.missing.length} | false positives ${queryReport.falsePositives.length} | ambiguous ${queryReport.ambiguous.length} | missing context ${queryReport.missingContext.length}`
   );
   for (const result of queryReport.topResults) {
-    console.log(`- #${result.sourceId} ${result.kind}${result.confidence === null ? "" : ` ${result.confidence}%`}: ${result.memory ?? result.sourceSnippet}`);
+    const confidence =
+      result.confidence === null ? "" : ` ${formatExtractionConfidence(result)}`;
+    console.log(`- #${result.sourceId} ${result.kind}${confidence}: ${result.memory ?? result.sourceSnippet}`);
   }
   console.log("");
 }

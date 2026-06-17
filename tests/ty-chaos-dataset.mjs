@@ -249,6 +249,7 @@ export function evaluateTyChaosRecall({ recall, memories }) {
       sourceItemId: memory.sourceItemId,
       kind: memory.kind,
       confidence: memory.confidence,
+      status: memory.status,
       content: memory.content
     }));
 
@@ -279,6 +280,7 @@ export function evaluateTyChaosRecall({ recall, memories }) {
         sourceId: result.source.id,
         kind: result.memory?.kind ?? "source",
         confidence: result.memory?.confidence ?? null,
+        status: result.memory?.status ?? null,
         memory: result.memory?.content ?? null,
         sourceSnippet: result.sourceSnippet
       }))

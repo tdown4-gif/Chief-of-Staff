@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { saveRecallFeedback } from "@/app/recall/actions";
+import { confidenceBadgeClass, getExtractionConfidence, getRecallConfidence } from "@/lib/confidence";
 import { recall } from "@/lib/recall";
 import { formatRecallResultsHeading, getRecallViewState, parseRecallFilters } from "@/lib/recall-view";
 
@@ -95,57 +96,71 @@ export default async function RecallPage({ searchParams }: RecallPageProps) {
           <h2>{formatRecallResultsHeading(query, results.length)}</h2>
           {viewState === "results" ? (
             <div className="inbox">
-              {results.map((result) => (
-                <article className="capture-item" key={`${result.source.id}-${result.memory?.id ?? "source"}`}>
-                  <div className="capture-meta">
-                    <span className="badge">{result.memory ? result.memory.kind : "source"}</span>
-                    {result.memory ? <span className="badge badge-muted">{result.memory.status}</span> : null}
-                    <span
-                      className={
-                        result.resultType === "needs_review" || result.resultType === "raw_fallback"
-                          ? "badge badge-review"
-                          : "badge badge-muted"
-                      }
-                    >
-                      {resultTypeLabels[result.resultType]}
-                    </span>
-                    <span className="badge badge-muted">{result.source.sourceType}</span>
-                    <span>Source #{result.source.id}</span>
-                    <span>{dateFormatter.format(new Date(result.source.createdAt))}</span>
-                    {result.memory ? <span>{result.memory.confidence}% confidence</span> : null}
-                  </div>
+              {results.map((result) => {
+                const recallConfidence = getRecallConfidence(result);
+                const extractionConfidence = result.memory ? getExtractionConfidence(result.memory) : null;
 
-                  {result.memory ? (
-                    <>
-                      <p className="memory-content">{result.memory.content}</p>
-                      <p className="memory-rationale">{result.memory.rationale}</p>
-                    </>
-                  ) : (
-                    <p className="memory-content">Raw source match</p>
-                  )}
+                return (
+                  <article className="capture-item" key={`${result.source.id}-${result.memory?.id ?? "source"}`}>
+                    <div className="capture-meta">
+                      <span className="badge">{result.memory ? result.memory.kind : "source"}</span>
+                      {result.memory ? <span className="badge badge-muted">{result.memory.status}</span> : null}
+                      <span
+                        className={
+                          result.resultType === "needs_review" || result.resultType === "raw_fallback"
+                            ? "badge badge-review"
+                            : "badge badge-muted"
+                        }
+                      >
+                        {resultTypeLabels[result.resultType]}
+                      </span>
+                      <span className={confidenceBadgeClass(recallConfidence.tone)}>
+                        Retrieval confidence: {recallConfidence.label}
+                      </span>
+                      {extractionConfidence ? (
+                        <span className={confidenceBadgeClass(extractionConfidence.tone)}>
+                          Extraction confidence: {extractionConfidence.label}
+                        </span>
+                      ) : null}
+                      <span className="badge badge-muted">{result.source.sourceType}</span>
+                      <span>Source #{result.source.id}</span>
+                      <span>{dateFormatter.format(new Date(result.source.createdAt))}</span>
+                    </div>
 
-                  <div className="source-proof">
-                    <p className="memory-list-title">Source proof</p>
-                    <p className="capture-content">{result.sourceSnippet}</p>
-                  </div>
+                    {result.memory ? (
+                      <>
+                        <p className="memory-content">{result.memory.content}</p>
+                        <p className="memory-rationale">{result.memory.rationale}</p>
+                        {extractionConfidence ? <p className="memory-rationale">{extractionConfidence.explanation}</p> : null}
+                      </>
+                    ) : (
+                      <p className="memory-content">Raw source match</p>
+                    )}
+                    <p className="memory-rationale">{recallConfidence.explanation}</p>
 
-                  <div className="recall-feedback-actions" aria-label={`Recall feedback for source ${result.source.id}`}>
-                    {[
-                      ["not_relevant", "Not relevant"],
-                      ["promote_to_memory", "Promote to memory"],
-                      ["add_context", "Add context"]
-                    ].map(([action, label]) => (
-                      <form action={saveRecallFeedback} key={action}>
-                        <input name="query" type="hidden" value={query} />
-                        <input name="action" type="hidden" value={action} />
-                        <input name="sourceItemId" type="hidden" value={result.source.id} />
-                        {result.memory ? <input name="memoryId" type="hidden" value={result.memory.id} /> : null}
-                        <button className="secondary-button" type="submit">{label}</button>
-                      </form>
-                    ))}
-                  </div>
-                </article>
-              ))}
+                    <div className="source-proof">
+                      <p className="memory-list-title">Source proof</p>
+                      <p className="capture-content">{result.sourceSnippet}</p>
+                    </div>
+
+                    <div className="recall-feedback-actions" aria-label={`Recall feedback for source ${result.source.id}`}>
+                      {[
+                        ["not_relevant", "Not relevant"],
+                        ["promote_to_memory", "Promote to memory"],
+                        ["add_context", "Add context"]
+                      ].map(([action, label]) => (
+                        <form action={saveRecallFeedback} key={action}>
+                          <input name="query" type="hidden" value={query} />
+                          <input name="action" type="hidden" value={action} />
+                          <input name="sourceItemId" type="hidden" value={result.source.id} />
+                          {result.memory ? <input name="memoryId" type="hidden" value={result.memory.id} /> : null}
+                          <button className="secondary-button" type="submit">{label}</button>
+                        </form>
+                      ))}
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           ) : (
             <div className="empty-state">No source-backed matches for &ldquo;{query}&rdquo;.</div>

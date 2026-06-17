@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { confidenceBadgeClass, getExtractionConfidence } from "@/lib/confidence";
 import { listOpenCommitments } from "@/lib/db";
 import { dismissOpenLoop, markOpenLoopDone } from "./actions";
 
@@ -41,35 +42,42 @@ export default function OpenLoopsPage() {
       <section className="recall-results" aria-label="Open commitments">
         {loops.length > 0 ? (
           <div className="inbox">
-            {loops.map(({ memory, source }) => (
-              <article className="capture-item" key={memory.id}>
-                <div className="capture-meta">
-                  <span className="badge">commitment</span>
-                  <span>{memory.confidence}% confidence</span>
-                  <span>Source #{source.id}</span>
-                  <span>{dateFormatter.format(new Date(source.createdAt))}</span>
-                </div>
+            {loops.map(({ memory, source }) => {
+              const extractionConfidence = getExtractionConfidence(memory);
 
-                <p className="memory-content">{memory.content}</p>
-                <p className="memory-rationale">{memory.rationale}</p>
+              return (
+                <article className="capture-item" key={memory.id}>
+                  <div className="capture-meta">
+                    <span className="badge">commitment</span>
+                    <span className={confidenceBadgeClass(extractionConfidence.tone)}>
+                      Extraction confidence: {extractionConfidence.label}
+                    </span>
+                    <span>Source #{source.id}</span>
+                    <span>{dateFormatter.format(new Date(source.createdAt))}</span>
+                  </div>
 
-                <div className="source-proof">
-                  <p className="memory-list-title">Source proof</p>
-                  <p className="capture-content">{buildSourceSnippet(source.content)}</p>
-                </div>
+                  <p className="memory-content">{memory.content}</p>
+                  <p className="memory-rationale">{memory.rationale}</p>
+                  <p className="memory-rationale">{extractionConfidence.explanation}</p>
 
-                <div className="open-loop-actions" aria-label={`Actions for commitment ${memory.id}`}>
-                  <form action={markOpenLoopDone}>
-                    <input name="memoryId" type="hidden" value={memory.id} />
-                    <button className="button" type="submit">Mark done</button>
-                  </form>
-                  <form action={dismissOpenLoop}>
-                    <input name="memoryId" type="hidden" value={memory.id} />
-                    <button className="secondary-button" type="submit">Dismiss</button>
-                  </form>
-                </div>
-              </article>
-            ))}
+                  <div className="source-proof">
+                    <p className="memory-list-title">Source proof</p>
+                    <p className="capture-content">{buildSourceSnippet(source.content)}</p>
+                  </div>
+
+                  <div className="open-loop-actions" aria-label={`Actions for commitment ${memory.id}`}>
+                    <form action={markOpenLoopDone}>
+                      <input name="memoryId" type="hidden" value={memory.id} />
+                      <button className="button" type="submit">Mark done</button>
+                    </form>
+                    <form action={dismissOpenLoop}>
+                      <input name="memoryId" type="hidden" value={memory.id} />
+                      <button className="secondary-button" type="submit">Dismiss</button>
+                    </form>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         ) : (
           <div className="empty-state">No open commitments found in proposed memories.</div>

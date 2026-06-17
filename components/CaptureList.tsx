@@ -1,4 +1,5 @@
 import type { MemoriesBySourceId, Memory, SourceItem } from "@/lib/db";
+import { confidenceBadgeClass, getExtractionConfidence } from "@/lib/confidence";
 import { getMemoryReviewState } from "@/lib/memory-review";
 import { correctMemoryContent, deleteReviewedMemory, updateReviewedMemory } from "@/app/memories/actions";
 
@@ -56,6 +57,7 @@ export function CaptureList({
                 {memories.map((memory) => {
                   const explicitDates = getExplicitDateTexts(memory);
                   const reviewState = getMemoryReviewState(memory.status);
+                  const extractionConfidence = getExtractionConfidence(memory);
 
                   return (
                     <div className="memory-row" key={memory.id}>
@@ -72,11 +74,14 @@ export function CaptureList({
                         >
                           {reviewState.statusLabel}
                         </span>
-                        <span>{memory.confidence}% confidence</span>
+                        <span className={confidenceBadgeClass(extractionConfidence.tone)}>
+                          Extraction confidence: {extractionConfidence.label}
+                        </span>
                         {explicitDates.length > 0 ? <span>Dates: {explicitDates.join(", ")}</span> : null}
                       </div>
                       <p className="memory-content">{memory.content}</p>
                       <p className="memory-rationale">{memory.rationale}</p>
+                      <p className="memory-rationale">{extractionConfidence.explanation}</p>
                       <form className="memory-correction-form" action={correctMemoryContent}>
                         <input name="memoryId" type="hidden" value={memory.id} />
                         <input name="returnTo" type="hidden" value={returnTo} />

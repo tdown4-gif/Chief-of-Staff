@@ -10,8 +10,14 @@ process.env.DATABASE_URL = `file:${path.join(dir, "holdout.db")}`;
 const dbModule = await import(`../lib/db.ts?holdout=${cacheBuster}`);
 const extractionModule = await import(`../lib/extraction.ts?holdout=${cacheBuster}`);
 const recallModule = await import(`../lib/recall.ts?holdout=${cacheBuster}`);
+const confidenceModule = await import(`../lib/confidence.ts?holdout=${cacheBuster}`);
 const seeded = await seedHoldoutDataset({ dbModule, extractionModule });
 const report = evaluateHoldoutRecall({ recall: recallModule.recall });
+
+function formatExtractionConfidence(memorySummary) {
+  const confidence = confidenceModule.getExtractionConfidence(memorySummary);
+  return `${confidence.label} - ${confidence.explanation}`;
+}
 
 console.log("Holdout recall eval");
 console.log(`Notes seeded: ${holdoutNotes.length}`);
@@ -28,7 +34,9 @@ for (const queryReport of report.queryReports) {
   console.log(`Q: ${queryReport.question}`);
   console.log(`Results: ${queryReport.resultCount} | misses ${queryReport.missing.length} | false positives ${queryReport.falsePositives.length} | source-backed ${queryReport.sourceBacked ? "yes" : "no"}`);
   for (const result of queryReport.topResults) {
-    console.log(`- #${result.sourceId} ${result.kind} ${result.resultType}${result.confidence === null ? "" : ` ${result.confidence}%`}: ${result.memory ?? result.sourceSnippet}`);
+    const confidence =
+      result.confidence === null ? "" : ` ${formatExtractionConfidence(result)}`;
+    console.log(`- #${result.sourceId} ${result.kind} ${result.resultType}${confidence}: ${result.memory ?? result.sourceSnippet}`);
   }
   console.log("");
 }
