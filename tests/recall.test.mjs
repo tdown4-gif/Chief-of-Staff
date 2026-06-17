@@ -117,3 +117,80 @@ test("recall fetches memories for recent sources in one batch", async () => {
   assert.equal(results[0].source.id, 1);
   assert.equal(results[0].memory?.content, "Mike");
 });
+
+test("recall does not surface dismissed memories by default", async () => {
+  const dbModule = await importWithTempDb("../lib/db.ts");
+  const { recall } = await import("../lib/recall.ts");
+  const source = dbModule.createSourceItem("Need to follow up with Sarah about pricing after the demo.", "text");
+  const memory = dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "commitment",
+    content: "Follow up with Sarah about pricing after the demo",
+    confidence: 92,
+    rationale: "The source says Ty needs to follow up with Sarah."
+  });
+
+  dbModule.updateMemoryStatus(memory.id, "dismissed");
+
+  const results = recall("What commitments mention Sarah?");
+
+  assert.equal(results.length, 0);
+});
+
+test("recall can include non-active memory statuses when explicitly requested", async () => {
+  const dbModule = await importWithTempDb("../lib/db.ts");
+  const { recall } = await import("../lib/recall.ts");
+  const source = dbModule.createSourceItem("Need to send Sarah the pricing notes.", "text");
+  const memory = dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "commitment",
+    content: "Send Sarah the pricing notes",
+    confidence: 92,
+    rationale: "The source says Ty needs to send Sarah notes."
+  });
+
+  dbModule.updateMemoryStatus(memory.id, "done");
+
+  const defaultResults = recall("Sarah pricing");
+  const doneResults = recall("Sarah pricing", 10, undefined, { statuses: ["done"] });
+
+  assert.equal(defaultResults.length, 0);
+  assert.equal(doneResults.length, 1);
+  assert.equal(doneResults[0].memory?.status, "done");
+});
+
+test("recall can filter results to requested memory kinds", async () => {
+  const dbModule = await importWithTempDb("../lib/db.ts");
+  const { recall } = await import("../lib/recall.ts");
+  const source = dbModule.createSourceItem(
+    "Met Sarah. Sarah project: tighten source-backed recall. Need to follow up with Sarah about pricing.",
+    "text"
+  );
+
+  dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "person",
+    content: "Sarah",
+    confidence: 84,
+    rationale: "The source says Ty met Sarah."
+  });
+  dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "project",
+    content: "Sarah: tighten source-backed recall",
+    confidence: 86,
+    rationale: "The source uses an explicit project label."
+  });
+  dbModule.createMemory({
+    sourceItemId: source.id,
+    kind: "commitment",
+    content: "Follow up with Sarah about pricing",
+    confidence: 92,
+    rationale: "The source says Ty needs to follow up with Sarah."
+  });
+
+  const results = recall("Sarah", 10, undefined, { kinds: ["project"] });
+
+  assert.equal(results.length, 1);
+  assert.equal(results[0].memory?.kind, "project");
+});

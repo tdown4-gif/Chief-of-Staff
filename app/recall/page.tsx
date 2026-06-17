@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { recall } from "@/lib/recall";
-import { formatRecallResultsHeading, getRecallViewState } from "@/lib/recall-view";
+import { formatRecallResultsHeading, getRecallViewState, parseRecallFilters } from "@/lib/recall-view";
 
 export const dynamic = "force-dynamic";
 
 type RecallPageProps = {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; kind?: string; status?: string }>;
 };
 
 const dateFormatter = new Intl.DateTimeFormat("en", {
@@ -16,7 +16,8 @@ const dateFormatter = new Intl.DateTimeFormat("en", {
 export default async function RecallPage({ searchParams }: RecallPageProps) {
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
-  const results = query ? recall(query) : [];
+  const filters = parseRecallFilters(params);
+  const results = query ? recall(query, 10, undefined, filters.options) : [];
   const viewState = getRecallViewState(query, results.length);
 
   return (
@@ -45,6 +46,18 @@ export default async function RecallPage({ searchParams }: RecallPageProps) {
             placeholder="Who was the insurance guy?"
             type="search"
           />
+          <select aria-label="Memory kind" className="recall-select" defaultValue={filters.selectedKind} name="kind">
+            <option value="all">All kinds</option>
+            <option value="person">People</option>
+            <option value="project">Projects</option>
+            <option value="idea">Ideas</option>
+            <option value="commitment">Commitments</option>
+          </select>
+          <select aria-label="Memory status" className="recall-select" defaultValue={filters.selectedStatus} name="status">
+            <option value="active">Active</option>
+            <option value="done">Done</option>
+            <option value="dismissed">Dismissed</option>
+          </select>
           <button className="button" type="submit">Search memory</button>
         </form>
       </section>
@@ -64,6 +77,7 @@ export default async function RecallPage({ searchParams }: RecallPageProps) {
                 <article className="capture-item" key={`${result.source.id}-${result.memory?.id ?? "source"}`}>
                   <div className="capture-meta">
                     <span className="badge">{result.memory ? result.memory.kind : "source"}</span>
+                    {result.memory ? <span className="badge badge-muted">{result.memory.status}</span> : null}
                     <span>Source #{result.source.id}</span>
                     <span>{dateFormatter.format(new Date(result.source.createdAt))}</span>
                     {result.memory ? <span>{result.memory.confidence}% confidence</span> : null}

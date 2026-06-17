@@ -34,7 +34,8 @@ a {
 
 button,
 textarea,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -211,6 +212,11 @@ p {
   font-weight: 700;
 }
 
+.badge-muted {
+  background: #f8fafc;
+  color: var(--muted);
+}
+
 .capture-content {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -237,7 +243,7 @@ p {
 
 .memory-row {
   display: grid;
-  gap: 4px;
+  gap: 6px;
 }
 
 .memory-content,
@@ -256,6 +262,14 @@ p {
   font-size: 0.92rem;
 }
 
+.memory-review-form {
+  margin: 4px 0 0;
+}
+
+.memory-review-form .secondary-button {
+  padding: 8px 12px;
+}
+
 .recall-panel,
 .recall-results {
   margin-top: 28px;
@@ -263,11 +277,12 @@ p {
 
 .recall-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(220px, 1fr) minmax(130px, auto) minmax(130px, auto) auto;
   gap: 10px;
 }
 
-.recall-input {
+.recall-input,
+.recall-select {
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -276,7 +291,8 @@ p {
   background: #ffffff;
 }
 
-.recall-input:focus {
+.recall-input:focus,
+.recall-select:focus {
   outline: 3px solid #dbeafe;
   border-color: #93c5fd;
 }
@@ -344,12 +360,14 @@ p {
 
   .button,
   .secondary-button,
-  .nav-link {
+  .nav-link,
+  .recall-select {
     width: 100%;
   }
 
   .open-loop-actions,
-  .open-loop-actions form {
+  .open-loop-actions form,
+  .memory-review-form {
     width: 100%;
   }
 

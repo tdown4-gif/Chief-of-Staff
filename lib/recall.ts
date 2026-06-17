@@ -1,4 +1,12 @@
-import { listMemoriesForSources, listRecentSourceItems, type MemoriesBySourceId, type Memory, type SourceItem } from "./db.ts";
+import {
+  listMemoriesForSources,
+  listRecentSourceItems,
+  type MemoriesBySourceId,
+  type Memory,
+  type MemoryKind,
+  type MemoryStatus,
+  type SourceItem
+} from "./db.ts";
 
 export type RecallResult = {
   source: SourceItem;
@@ -10,6 +18,12 @@ export type RecallResult = {
 export type RecallDependencies = {
   listRecentSourceItems: (limit?: number) => SourceItem[];
   listMemoriesForSources: (sourceItemIds: number[]) => MemoriesBySourceId;
+};
+
+export type RecallOptions = {
+  kinds?: MemoryKind[];
+  statuses?: MemoryStatus[];
+  includeRawSources?: boolean;
 };
 
 const defaultRecallDependencies: RecallDependencies = {
@@ -101,24 +115,44 @@ function buildSourceSnippet(sourceContent: string, queryTokens: string[], maxLen
   return `${prefix}${normalized.slice(start, end)}${suffix}`;
 }
 
+function memoryMatchesOptions(memory: Memory, options: Required<RecallOptions>): boolean {
+  return options.kinds.includes(memory.kind) && options.statuses.includes(memory.status);
+}
+
+function normalizeOptions(options: RecallOptions = {}): Required<RecallOptions> {
+  return {
+    kinds: options.kinds?.length ? [...new Set(options.kinds)] : ["person", "project", "idea", "commitment"],
+    statuses: options.statuses?.length ? [...new Set(options.statuses)] : ["active"],
+    includeRawSources: options.includeRawSources ?? true
+  };
+}
+
 export function recall(
   question: string,
   limit = 10,
-  dependencies: RecallDependencies = defaultRecallDependencies
+  dependencies: RecallDependencies = defaultRecallDependencies,
+  options: RecallOptions = {}
 ): RecallResult[] {
   const queryTokens = Array.from(new Set(tokenize(question)));
   if (queryTokens.length === 0) {
     return [];
   }
 
+  const normalizedOptions = normalizeOptions(options);
   const sources = dependencies.listRecentSourceItems(100);
   const memoriesBySource = dependencies.listMemoriesForSources(sources.map((source) => source.id));
   const results = sources.flatMap<RecallResult>((source) => {
     const memories = memoriesBySource[source.id] ?? [];
     const sourceScore = countMatches(source.content, queryTokens);
+    let filteredOutMemoryMatched = false;
     const memoryResults = memories.flatMap<RecallResult>((memory) => {
       const memoryText = `${memory.kind} ${memory.content} ${memory.rationale}`;
       const memoryScore = countMatches(memoryText, queryTokens);
+      if (!memoryMatchesOptions(memory, normalizedOptions)) {
+        filteredOutMemoryMatched ||= memoryScore > 0;
+        return [];
+      }
+
       const score = sourceScore + memoryScore * 2;
 
       return score > 0
@@ -130,7 +164,9 @@ export function recall(
       return memoryResults;
     }
 
-    return sourceScore > 0 ? [{ source, memory: null, sourceSnippet: buildSourceSnippet(source.content, queryTokens), score: sourceScore }] : [];
+    return normalizedOptions.includeRawSources && !filteredOutMemoryMatched && sourceScore > 0
+      ? [{ source, memory: null, sourceSnippet: buildSourceSnippet(source.content, queryTokens), score: sourceScore }]
+      : [];
   });
 
   return results.sort((a, b) => b.score - a.score || b.source.id - a.source.id).slice(0, Math.max(1, limit));

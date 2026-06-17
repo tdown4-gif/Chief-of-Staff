@@ -1,4 +1,6 @@
 import type { MemoriesBySourceId, Memory, SourceItem } from "@/lib/db";
+import { getMemoryReviewState } from "@/lib/memory-review";
+import { updateReviewedMemory } from "@/app/memories/actions";
 
 const dateFormatter = new Intl.DateTimeFormat("en", {
   dateStyle: "medium",
@@ -21,7 +23,15 @@ function getExplicitDateTexts(memory: Memory): string[] {
   }
 }
 
-export function CaptureList({ items, memoriesBySource }: { items: SourceItem[]; memoriesBySource: MemoriesBySourceId }) {
+export function CaptureList({
+  items,
+  memoriesBySource,
+  returnTo = "/inbox"
+}: {
+  items: SourceItem[];
+  memoriesBySource: MemoriesBySourceId;
+  returnTo?: "/capture" | "/inbox";
+}) {
   if (items.length === 0) {
     return <div className="empty-state">No captures yet. Start by saving one messy thought.</div>;
   }
@@ -45,16 +55,26 @@ export function CaptureList({ items, memoriesBySource }: { items: SourceItem[]; 
                 <p className="memory-list-title">Proposed memories</p>
                 {memories.map((memory) => {
                   const explicitDates = getExplicitDateTexts(memory);
+                  const reviewState = getMemoryReviewState(memory.status);
 
                   return (
                     <div className="memory-row" key={memory.id}>
                       <div className="capture-meta">
                         <span className="badge">{memory.kind}</span>
+                        <span className={reviewState.statusTone === "muted" ? "badge badge-muted" : "badge"}>
+                          {reviewState.statusLabel}
+                        </span>
                         <span>{memory.confidence}% confidence</span>
                         {explicitDates.length > 0 ? <span>Dates: {explicitDates.join(", ")}</span> : null}
                       </div>
                       <p className="memory-content">{memory.content}</p>
                       <p className="memory-rationale">{memory.rationale}</p>
+                      <form className="memory-review-form" action={updateReviewedMemory}>
+                        <input name="memoryId" type="hidden" value={memory.id} />
+                        <input name="status" type="hidden" value={reviewState.nextAction.status} />
+                        <input name="returnTo" type="hidden" value={returnTo} />
+                        <button className="secondary-button" type="submit">{reviewState.nextAction.label}</button>
+                      </form>
                     </div>
                   );
                 })}

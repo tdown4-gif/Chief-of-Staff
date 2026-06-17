@@ -6,7 +6,7 @@ import { listMemoriesForSources, listRecentSourceItems } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 type CapturePageProps = {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; memoryUpdated?: string }>;
 };
 
 export default async function CapturePage({ searchParams }: CapturePageProps) {
@@ -44,7 +44,8 @@ export default async function CapturePage({ searchParams }: CapturePageProps) {
 
       <section style={{ marginTop: 28 }} aria-label="Recent captures">
         <h2>Recent captures</h2>
-        <CaptureList items={recentCaptures} memoriesBySource={memoriesBySource} />
+        {params.memoryUpdated ? <p className="hint">Memory review saved.</p> : null}
+        <CaptureList items={recentCaptures} memoriesBySource={memoriesBySource} returnTo="/capture" />
       </section>
     </main>
   );
