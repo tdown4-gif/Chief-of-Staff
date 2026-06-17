@@ -24,6 +24,7 @@ export default async function CapturePage({ searchParams }: CapturePageProps) {
         <Link href="/">Trusted External Memory</Link>
         <div className="nav-links">
           <Link className="nav-link" href="/inbox">Inbox</Link>
+          <Link className="nav-link" href="/recall">Recall</Link>
         </div>
       </nav>
 

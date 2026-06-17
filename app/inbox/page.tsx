@@ -15,6 +15,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
         <Link href="/">Trusted External Memory</Link>
         <div className="nav-links">
           <Link className="nav-link" href="/capture">Capture</Link>
+          <Link className="nav-link" href="/recall">Recall</Link>
         </div>
       </nav>
 

@@ -256,6 +256,39 @@ p {
   font-size: 0.92rem;
 }
 
+.recall-panel,
+.recall-results {
+  margin-top: 28px;
+}
+
+.recall-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.recall-input {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--ink);
+  background: #ffffff;
+}
+
+.recall-input:focus {
+  outline: 3px solid #dbeafe;
+  border-color: #93c5fd;
+}
+
+.source-proof {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
 .empty-state {
   border: 1px dashed #cbd5e1;
   border-radius: 8px;
@@ -292,6 +325,10 @@ p {
   .capture-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .recall-form {
+    grid-template-columns: 1fr;
   }
 
   .button,

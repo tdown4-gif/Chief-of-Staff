@@ -201,3 +201,16 @@ The fallback only proposes:
 - commitments
 
 Explicit dates are stored inside `memories.metadata_json` as supporting metadata, not as a separate memory kind. This keeps V0 anchored to source-backed memory without introducing date, event, trip, task-management, CRM, or calendar modules.
+
+### recall v0
+
+The current recall layer does not add new tables. It performs bounded keyword retrieval over recent `source_items` and their proposed `memories`.
+
+Recall results include:
+
+- the matching memory, when one exists
+- the raw source item
+- a source snippet
+- a simple match score used only for ordering
+
+This is intentionally not a chat system, task system, dashboard, semantic search service, or proactive recommendation layer. The only purpose is to prove that Ty can recover captured context with visible source proof.

@@ -14,6 +14,7 @@ This repo is currently building the memory foundation only:
 - Preserve each capture as a raw source item.
 - Show recent captures in the universal inbox.
 - Produce source-backed proposed memories for people, projects, ideas, commitments, and explicit dates.
+- Search raw captures and proposed memories from `/recall`.
 - Keep the app usable from laptop and phone widths.
 
 Do **not** build Chief of Staff features yet. Travel, gifts, skills, CRM, SBIR tracking, research agents, resume updates, expense tracking, relationship intelligence, calendar management, and dashboards are explicitly deferred.
@@ -39,6 +40,7 @@ Then open:
 - Home: `http://localhost:3000`
 - Capture: `http://localhost:3000/capture`
 - Inbox: `http://localhost:3000/inbox`
+- Recall: `http://localhost:3000/recall`
 
 If port 3000 is already in use, Next.js will print the alternate local URL, such as `http://localhost:3001`.
 
@@ -59,6 +61,7 @@ npm run start
 3. Save it.
 4. Confirm `/inbox` shows the raw source item with timestamp.
 5. Confirm the source item shows a proposed commitment memory with confidence and rationale.
+6. Open `/recall`, search for `pricing`, and confirm the result includes source proof.
 
 ## Extraction v0
 
@@ -73,6 +76,12 @@ The fallback extracts only:
 - Explicit dates as metadata on proposed memories
 
 Every stored memory points back to `source_items.id`, includes confidence, and preserves a rationale. Extraction errors are isolated so a failed extraction does not break raw capture.
+
+## Recall v0
+
+Recall is deliberately keyword-based for now. `/recall` searches recent raw captures and proposed memories, then returns matching memories or raw source matches with source snippets.
+
+V0 recall does not use embeddings, web research, proactive suggestions, chat history, or calendar/task workflows. It is only meant to prove that captured context can be recovered with provenance.
 
 ## Start here
 

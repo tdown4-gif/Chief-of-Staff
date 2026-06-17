@@ -8,6 +8,7 @@ export default function Home() {
         <div className="nav-links">
           <Link className="nav-link" href="/capture">Capture</Link>
           <Link className="nav-link" href="/inbox">Inbox</Link>
+          <Link className="nav-link" href="/recall">Recall</Link>
         </div>
       </nav>
 
@@ -20,7 +21,7 @@ export default function Home() {
         </p>
         <div className="nav-links">
           <Link className="button" href="/capture">Capture a thought</Link>
-          <Link className="secondary-button" href="/inbox">View recent captures</Link>
+          <Link className="secondary-button" href="/recall">Search memory</Link>
         </div>
       </section>
 
@@ -30,8 +31,8 @@ export default function Home() {
           <p>Fast text capture from laptop or phone with no folders, tags, or organization decisions.</p>
         </div>
         <div className="card">
-          <h2>Preserve</h2>
-          <p>Every entry is stored as a raw source item with timestamp and source type.</p>
+          <h2>Recall</h2>
+          <p>Search proposed memories and raw captures with source snippets attached to every result.</p>
         </div>
         <div className="card">
           <h2>Defer</h2>

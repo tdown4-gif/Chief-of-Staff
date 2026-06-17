@@ -52,16 +52,25 @@ type MemoryRow = {
 const dataDir = path.join(process.cwd(), "data");
 
 let db: Database.Database | undefined;
+let currentDbPath: string | undefined;
 
 function getDbPath() {
   return process.env.DATABASE_URL?.replace(/^file:/, "") ?? path.join(dataDir, "chief-of-staff.db");
 }
 
 function getDb() {
+  const dbPath = getDbPath();
+
+  if (db && currentDbPath !== dbPath) {
+    db.close();
+    db = undefined;
+    currentDbPath = undefined;
+  }
+
   if (!db) {
-    const dbPath = getDbPath();
     mkdirSync(path.dirname(dbPath), { recursive: true });
     db = new Database(dbPath);
+    currentDbPath = dbPath;
     db.pragma("journal_mode = WAL");
     db.pragma("foreign_keys = ON");
     db.exec(`
