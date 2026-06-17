@@ -1,4 +1,4 @@
-import { createMemory, type Memory, type MemoryKind, type SourceItem } from "./db.ts";
+import { createMemories, type Memory, type MemoryKind, type SourceItem } from "./db.ts";
 
 export type ExplicitDate = {
   text: string;
@@ -119,7 +119,8 @@ function makeDraft(
 function extractPersonDrafts(fragments: string[]): MemoryDraft[] {
   const drafts: MemoryDraft[] = [];
   const seen = new Set<string>();
-  const personPattern = /\b(?:met|meet|spoke with|talked to|call with|intro to)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/gi;
+  const personPattern =
+    /\b(?:[Mm][Ee][Tt]|[Mm][Ee][Ee][Tt]|[Ss][Pp][Oo][Kk][Ee]\s+[Ww][Ii][Tt][Hh]|[Tt][Aa][Ll][Kk][Ee][Dd]\s+[Tt][Oo]|[Cc][Aa][Ll][Ll]\s+[Ww][Ii][Tt][Hh]|[Ii][Nn][Tt][Rr][Oo]\s+[Tt][Oo])\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/g;
 
   for (const fragment of fragments) {
     for (const match of fragment.matchAll(personPattern)) {
@@ -250,23 +251,24 @@ export async function extractAndStoreMemoriesForSource(
 ): Promise<{ memories: Memory[]; error: string | null }> {
   try {
     const drafts = await extractMemoryDrafts(source, extractor);
-    const memories = drafts.flatMap((draft) => {
+    const memoryInputs = drafts.flatMap((draft) => {
       const normalizedDraft = normalizeDraft(draft);
       if (!normalizedDraft) {
         return [];
       }
 
       return [
-        createMemory({
+        {
           sourceItemId: source.id,
           kind: normalizedDraft.kind,
           content: normalizedDraft.content,
           confidence: normalizedDraft.confidence,
           rationale: normalizedDraft.rationale,
           metadataJson: normalizedDraft.metadata ? JSON.stringify(normalizedDraft.metadata) : null
-        })
+        }
       ];
     });
+    const memories = createMemories(memoryInputs);
 
     return { memories, error: null };
   } catch (error) {

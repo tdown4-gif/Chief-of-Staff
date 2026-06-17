@@ -1,4 +1,4 @@
-import { listMemoriesForSource, type Memory, type SourceItem } from "@/lib/db";
+import type { MemoriesBySourceId, Memory, SourceItem } from "@/lib/db";
 
 const dateFormatter = new Intl.DateTimeFormat("en", {
   dateStyle: "medium",
@@ -21,7 +21,7 @@ function getExplicitDateTexts(memory: Memory): string[] {
   }
 }
 
-export function CaptureList({ items }: { items: SourceItem[] }) {
+export function CaptureList({ items, memoriesBySource }: { items: SourceItem[]; memoriesBySource: MemoriesBySourceId }) {
   if (items.length === 0) {
     return <div className="empty-state">No captures yet. Start by saving one messy thought.</div>;
   }
@@ -29,7 +29,7 @@ export function CaptureList({ items }: { items: SourceItem[] }) {
   return (
     <div className="inbox">
       {items.map((item) => {
-        const memories = listMemoriesForSource(item.id);
+        const memories = memoriesBySource[item.id] ?? [];
 
         return (
           <article className="capture-item" key={item.id}>

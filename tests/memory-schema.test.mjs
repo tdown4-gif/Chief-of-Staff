@@ -66,3 +66,78 @@ test("memories can be listed by source for provenance", async () => {
   assert.equal(memories[0].sourceItemId, source.id);
   assert.equal(memories[0].kind, "commitment");
 });
+
+test("memories can be listed for multiple sources in one query", async () => {
+  const { dbModule } = await importDbWithTempPath();
+  const firstSource = dbModule.createSourceItem("Met Mike.", "text");
+  const secondSource = dbModule.createSourceItem("Idea: renewal reminder.", "text");
+
+  dbModule.createMemory({
+    sourceItemId: firstSource.id,
+    kind: "person",
+    content: "Mike",
+    confidence: 84,
+    rationale: "The source says Ty met Mike."
+  });
+  dbModule.createMemory({
+    sourceItemId: secondSource.id,
+    kind: "idea",
+    content: "renewal reminder",
+    confidence: 88,
+    rationale: "The source uses an explicit idea label."
+  });
+
+  const memoriesBySource = dbModule.listMemoriesForSources([firstSource.id, secondSource.id]);
+
+  assert.equal(memoriesBySource[firstSource.id].length, 1);
+  assert.equal(memoriesBySource[firstSource.id][0].content, "Mike");
+  assert.equal(memoriesBySource[secondSource.id].length, 1);
+  assert.equal(memoriesBySource[secondSource.id][0].kind, "idea");
+});
+
+test("memory creation rejects empty rationale", async () => {
+  const { dbModule } = await importDbWithTempPath();
+  const source = dbModule.createSourceItem("Met Mike.", "text");
+
+  assert.throws(
+    () =>
+      dbModule.createMemory({
+        sourceItemId: source.id,
+        kind: "person",
+        content: "Mike",
+        confidence: 84,
+        rationale: "   "
+      }),
+    /Memory rationale cannot be empty/
+  );
+
+  assert.equal(dbModule.listMemoriesForSource(source.id).length, 0);
+});
+
+test("multi-memory creation is atomic when a later draft is invalid", async () => {
+  const { dbModule } = await importDbWithTempPath();
+  const source = dbModule.createSourceItem("Met Mike. Idea: renewal reminder.", "text");
+
+  assert.throws(
+    () =>
+      dbModule.createMemories([
+        {
+          sourceItemId: source.id,
+          kind: "person",
+          content: "Mike",
+          confidence: 84,
+          rationale: "The source says Ty met Mike."
+        },
+        {
+          sourceItemId: source.id,
+          kind: "idea",
+          content: "renewal reminder",
+          confidence: 88,
+          rationale: " "
+        }
+      ]),
+    /Memory rationale cannot be empty/
+  );
+
+  assert.equal(dbModule.listMemoriesForSource(source.id).length, 0);
+});

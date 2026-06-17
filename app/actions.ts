@@ -20,7 +20,11 @@ export async function saveCapture(formData: FormData): Promise<void> {
   }
 
   const source = createSourceItem(content, "text");
-  await extractAndStoreMemoriesForSource(source);
+  const { error } = await extractAndStoreMemoriesForSource(source);
+  if (error) {
+    console.error("extraction failed for source", source.id, error);
+  }
+
   revalidatePath("/capture");
   revalidatePath("/inbox");
   redirect("/inbox?captured=1");

@@ -38,6 +38,49 @@ test("deterministic fallback proposes v0 memory drafts with explicit date metada
   assert.ok(datedDraft, "expected explicit date metadata on a proposed memory");
 });
 
+test("deterministic fallback extracts only properly capitalized person names", async () => {
+  const { extractMemoryDrafts } = await import("../lib/extraction.ts");
+  const source = {
+    id: 43,
+    content: "Met Sarah Chen and spoke with John about the demo.",
+    sourceType: "text",
+    createdAt: "2026-06-16T12:00:00.000Z"
+  };
+
+  const drafts = await extractMemoryDrafts(source);
+  const people = drafts.filter((draft) => draft.kind === "person").map((draft) => draft.content);
+
+  assert.deepEqual(people, ["Sarah Chen", "John"]);
+});
+
+test("deterministic fallback does not invent people from lowercase nouns/pronouns", async () => {
+  const { extractMemoryDrafts } = await import("../lib/extraction.ts");
+  const source = {
+    id: 7,
+    content: "Need to meet the vendor about pricing. Spoke with everyone on the team.",
+    sourceType: "text",
+    createdAt: "2026-06-16T12:00:00.000Z"
+  };
+
+  const drafts = await extractMemoryDrafts(source);
+
+  assert.ok(!drafts.some((draft) => draft.kind === "person"), "should not propose person memories here");
+});
+
+test("deterministic fallback ignores benign source text", async () => {
+  const { extractMemoryDrafts } = await import("../lib/extraction.ts");
+  const source = {
+    id: 8,
+    content: "Reorganized the garage and watched a movie.",
+    sourceType: "text",
+    createdAt: "2026-06-16T12:00:00.000Z"
+  };
+
+  const drafts = await extractMemoryDrafts(source);
+
+  assert.deepEqual(drafts, []);
+});
+
 test("extraction stores source-backed memories and isolates extractor failures", async () => {
   const dbModule = await importWithTempDb("../lib/db.ts");
   const extractionModule = await import("../lib/extraction.ts");

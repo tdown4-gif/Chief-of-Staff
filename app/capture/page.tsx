@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CaptureForm } from "@/components/CaptureForm";
 import { CaptureList } from "@/components/CaptureList";
-import { listRecentSourceItems } from "@/lib/db";
+import { listMemoriesForSources, listRecentSourceItems } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +12,7 @@ type CapturePageProps = {
 export default async function CapturePage({ searchParams }: CapturePageProps) {
   const params = await searchParams;
   const recentCaptures = listRecentSourceItems(5);
+  const memoriesBySource = listMemoriesForSources(recentCaptures.map((item) => item.id));
   const error = params.error === "too-long"
     ? "That capture is unusually large. Keep it under 100,000 characters."
     : params.error === "empty"
@@ -42,7 +43,7 @@ export default async function CapturePage({ searchParams }: CapturePageProps) {
 
       <section style={{ marginTop: 28 }} aria-label="Recent captures">
         <h2>Recent captures</h2>
-        <CaptureList items={recentCaptures} />
+        <CaptureList items={recentCaptures} memoriesBySource={memoriesBySource} />
       </section>
     </main>
   );

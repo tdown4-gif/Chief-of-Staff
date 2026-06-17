@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { CaptureList } from "@/components/CaptureList";
-import { countSourceItems, listRecentSourceItems } from "@/lib/db";
+import { countSourceItems, listMemoriesForSources, listRecentSourceItems } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function InboxPage({ searchParams }: { searchParams: Promise<{ captured?: string }> }) {
   const params = await searchParams;
   const items = listRecentSourceItems(30);
+  const memoriesBySource = listMemoriesForSources(items.map((item) => item.id));
   const total = countSourceItems();
 
   return (
@@ -29,7 +30,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
       </section>
 
       <section style={{ marginTop: 28 }} aria-label="Inbox captures">
-        <CaptureList items={items} />
+        <CaptureList items={items} memoriesBySource={memoriesBySource} />
       </section>
     </main>
   );

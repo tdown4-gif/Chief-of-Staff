@@ -31,6 +31,8 @@ export type CreateMemoryInput = {
   metadataJson?: string | null;
 };
 
+export type MemoriesBySourceId = Record<number, Memory[]>;
+
 type SourceItemRow = {
   id: number;
   content: string;
@@ -158,7 +160,7 @@ export function countSourceItems(): number {
   return row.count;
 }
 
-export function createMemory(input: CreateMemoryInput): Memory {
+function validateMemoryInput(input: CreateMemoryInput) {
   if (!Number.isInteger(input.sourceItemId) || input.sourceItemId < 1) {
     throw new Error("Memory requires a valid source item.");
   }
@@ -167,12 +169,20 @@ export function createMemory(input: CreateMemoryInput): Memory {
     throw new Error("Memory content cannot be empty.");
   }
 
+  if (!input.rationale.trim()) {
+    throw new Error("Memory rationale cannot be empty.");
+  }
+
   if (!Number.isInteger(input.confidence) || input.confidence < 0 || input.confidence > 100) {
     throw new Error("Memory confidence must be an integer from 0 to 100.");
   }
+}
+
+function insertMemory(database: Database.Database, input: CreateMemoryInput): Memory {
+  validateMemoryInput(input);
 
   const createdAt = new Date().toISOString();
-  const result = getDb()
+  const result = database
     .prepare(`
       INSERT INTO memories (source_item_id, kind, content, confidence, rationale, metadata_json, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -199,6 +209,19 @@ export function createMemory(input: CreateMemoryInput): Memory {
   };
 }
 
+export function createMemory(input: CreateMemoryInput): Memory {
+  return insertMemory(getDb(), input);
+}
+
+export function createMemories(inputs: CreateMemoryInput[]): Memory[] {
+  const database = getDb();
+  const insertAll = database.transaction((memoryInputs: CreateMemoryInput[]) =>
+    memoryInputs.map((input) => insertMemory(database, input))
+  );
+
+  return insertAll(inputs);
+}
+
 export function listMemoriesForSource(sourceItemId: number): Memory[] {
   const rows = getDb()
     .prepare(`
@@ -210,4 +233,30 @@ export function listMemoriesForSource(sourceItemId: number): Memory[] {
     .all(sourceItemId) as MemoryRow[];
 
   return rows.map(mapMemory);
+}
+
+export function listMemoriesForSources(sourceItemIds: number[]): MemoriesBySourceId {
+  const safeIds = [...new Set(sourceItemIds.filter((id) => Number.isInteger(id) && id > 0))];
+  const memoriesBySource: MemoriesBySourceId = Object.fromEntries(safeIds.map((id) => [id, []]));
+
+  if (safeIds.length === 0) {
+    return memoriesBySource;
+  }
+
+  const placeholders = safeIds.map(() => "?").join(", ");
+  const rows = getDb()
+    .prepare(`
+      SELECT id, source_item_id, kind, content, confidence, rationale, metadata_json, created_at
+      FROM memories
+      WHERE source_item_id IN (${placeholders})
+      ORDER BY source_item_id ASC, id DESC
+    `)
+    .all(...safeIds) as MemoryRow[];
+
+  for (const memory of rows.map(mapMemory)) {
+    memoriesBySource[memory.sourceItemId] ??= [];
+    memoriesBySource[memory.sourceItemId].push(memory);
+  }
+
+  return memoriesBySource;
 }
