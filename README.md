@@ -65,6 +65,14 @@ node scripts/dogfood-memory-eval.mjs
 
 It seeds realistic messy notes across people, ideas, commitments, Palms AI, travel context, and random thoughts, then checks the V1 questions from `vision/mvp.md` for misses and false positives.
 
+For a harder diagnostic, run the Ty Chaos Dataset:
+
+```bash
+node scripts/ty-chaos-memory-eval.mjs
+```
+
+It seeds 100 deliberately messy notes and reports misses, false positives, ambiguous retrievals, missing context, and weak confidence scores. This report is expected to find problems.
+
 ## First manual test
 
 1. Open `/capture` on laptop or phone.
