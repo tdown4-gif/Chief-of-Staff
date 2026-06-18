@@ -1,0 +1,12 @@
+.git
+.github
+.vscode
+.env*
+!.env.example
+data
+tests
+docs
+architecture
+research
+vision
+NOW.md
