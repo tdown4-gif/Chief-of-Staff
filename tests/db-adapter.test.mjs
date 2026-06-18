@@ -7,6 +7,8 @@ import test from "node:test";
 async function importWithTempDb(modulePath) {
   const dir = mkdtempSync(path.join(tmpdir(), "chief-of-staff-db-adapter-test-"));
   process.env.DATABASE_URL = `file:${path.join(dir, "test.db")}`;
+  delete process.env.SUPABASE_URL;
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
   delete process.env.TURSO_DATABASE_URL;
   delete process.env.TURSO_AUTH_TOKEN;
   return import(`${modulePath}?db=${Date.now()}-${Math.random()}`);
@@ -16,6 +18,15 @@ async function importWithTempLibsqlDb(modulePath) {
   const dir = mkdtempSync(path.join(tmpdir(), "chief-of-staff-libsql-adapter-test-"));
   delete process.env.DATABASE_URL;
   process.env.TURSO_DATABASE_URL = `file:${path.join(dir, "test.db")}`;
+  process.env.TURSO_AUTH_TOKEN = "test-token";
+  return import(`${modulePath}?db=${Date.now()}-${Math.random()}`);
+}
+
+async function importWithSupabaseEnv(modulePath) {
+  delete process.env.DATABASE_URL;
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key";
+  process.env.TURSO_DATABASE_URL = "file:/tmp/should-not-win.db";
   process.env.TURSO_AUTH_TOKEN = "test-token";
   return import(`${modulePath}?db=${Date.now()}-${Math.random()}`);
 }
@@ -42,6 +53,12 @@ test("public db facade uses libsql persistence when Turso environment is configu
 
   assert.equal((await dbModule.listRecentSourceItems(1))[0].content, "Captured on iPhone, visible on laptop.");
   assert.equal((await dbModule.listMemoriesForSource(source.id))[0].id, memory.id);
+});
+
+test("public db facade prefers Supabase when Supabase environment is configured", async () => {
+  const dbModule = await importWithSupabaseEnv("../lib/db.ts");
+
+  assert.equal(dbModule.getDatabaseAdapterKind(), "supabase");
 });
 
 test("public db facade preserves capture and memory behavior through adapter", async () => {

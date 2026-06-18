@@ -28,6 +28,7 @@ Important correction for the MVP path: capture is iPhone-first. The web app can 
 - Next.js
 - TypeScript
 - SQLite via `better-sqlite3`
+- Supabase/Postgres for hosted shared persistence
 - Simple CSS
 
 SQLite data is stored at `data/chief-of-staff.db` by default and is ignored by git. You can override the path with `DATABASE_URL=file:/absolute/path/to.db`.
@@ -36,9 +37,9 @@ SQLite data is stored at `data/chief-of-staff.db` by default and is ignored by g
 
 Local development uses SQLite by default at `data/chief-of-staff.db`.
 
-For the iPhone-first MVP path, production will use hosted Turso/libSQL so phone and laptop share one data store. This branch keeps the local SQLite fallback and introduces the database adapter boundary. The next persistence PR wires `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`.
+For the iPhone-first MVP path, production uses hosted Supabase/Postgres so phone and laptop share one data store. Apply `supabase/schema.sql`, then set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in deployment secrets. The service role key is server-only and must never be exposed to browser code.
 
-Future iPhone Shortcut capture will use `CAPTURE_API_TOKEN`. Generate a long random token, store it only in deployment secrets and the iOS Shortcut, never log it, and rotate it by replacing the deployment secret and updating the Shortcut `Authorization` header.
+iPhone Shortcut capture uses `CAPTURE_API_TOKEN`. Generate a long random token, store it only in deployment secrets and the iOS Shortcut, never log it, and rotate it by replacing the deployment secret and updating the Shortcut `Authorization` header.
 
 ## Local setup
 

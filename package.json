@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@libsql/client": "^0.17.4",
+    "@supabase/supabase-js": "^2.108.2",
     "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^11.8.1",
     "next": "^15.1.3",

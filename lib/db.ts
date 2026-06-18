@@ -1,5 +1,6 @@
 import { libsqlDatabase } from "./db-libsql.ts";
 import { localSqliteDatabase } from "./db-local.ts";
+import { supabaseDatabase } from "./db-supabase.ts";
 import type {
   CreateMemoryInput,
   CreateRecallFeedbackInput,
@@ -22,6 +23,10 @@ export type {
 } from "./db-types.ts";
 
 function getDatabase(): MemoryDatabase {
+  if (process.env.SUPABASE_URL?.trim() && process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+    return supabaseDatabase;
+  }
+
   if (process.env.TURSO_DATABASE_URL?.trim() && process.env.TURSO_AUTH_TOKEN?.trim()) {
     return libsqlDatabase;
   }
@@ -29,7 +34,11 @@ function getDatabase(): MemoryDatabase {
   return localSqliteDatabase;
 }
 
-export function getDatabaseAdapterKind(): "local-sqlite" | "libsql" {
+export function getDatabaseAdapterKind(): "local-sqlite" | "libsql" | "supabase" {
+  if (process.env.SUPABASE_URL?.trim() && process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+    return "supabase";
+  }
+
   if (process.env.TURSO_DATABASE_URL?.trim() && process.env.TURSO_AUTH_TOKEN?.trim()) {
     return "libsql";
   }
