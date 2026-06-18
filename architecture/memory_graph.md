@@ -23,6 +23,8 @@ Primary node types:
 - Memories
 - Capture items
 - Suggestions
+- Research queue items
+- Research outputs
 
 ## Edges
 
@@ -40,6 +42,10 @@ Example edge types:
 - subscription_related_to_company
 - memory_derived_from_capture
 - suggestion_based_on_memory
+- research_queue_item_created_from_source
+- research_queue_item_created_from_memory
+- research_output_based_on_research_queue_item
+- research_output_stored_as_memory
 
 ## Explainable Memory
 
@@ -133,3 +139,32 @@ V1 should support:
 - Suggestions based on related objects.
 
 V1 does not need complex graph visualization or dashboards.
+
+## Phase 2.5 Research Queue
+
+Research is an optional workflow on top of memory.
+
+ResearchQueueItem should be modeled as its own graph node, not as a memory status. Memory status should remain about trust and lifecycle: active, needs_review, done, dismissed.
+
+Allowed relationships:
+
+- A source item can create one or more ResearchQueueItems.
+- A memory can create one or more ResearchQueueItems.
+- A ResearchQueueItem can later produce one or more research outputs.
+- Each research output should be stored back into memory and linked to the original source or memory.
+
+Future research output types:
+
+- Competitor analysis
+- Market research
+- Related ideas
+- User complaints
+- Suggested next actions
+
+Guardrails:
+
+- Do not build autonomous agents.
+- Do not build continuous research.
+- Do not build scheduled research.
+- Do not build web crawling.
+- Do not create research outputs that are disconnected from source-backed memory.

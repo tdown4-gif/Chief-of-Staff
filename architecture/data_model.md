@@ -132,6 +132,52 @@ Fields:
 - created_at
 - resolved_at
 
+### ResearchQueueItem
+
+An explicit request to research a source item or memory later.
+
+ResearchQueueItem is separate from Memory status. Memory status should remain about trust and lifecycle:
+
+- active
+- needs_review
+- done
+- dismissed
+
+Research intent is a workflow layered on top of memory. A source item or memory can be remembered without research, and it can spawn one or more research requests later.
+
+Fields:
+
+- id
+- user_id
+- source_item_id
+- memory_id
+- research_prompt
+- requested_output_type
+- status
+- created_at
+- updated_at
+- completed_at
+
+`source_item_id` and `memory_id` should be nullable only to support different entry points, but every ResearchQueueItem must link to at least one original source item or memory.
+
+Future requested output types:
+
+- competitor_analysis
+- market_research
+- related_ideas
+- user_complaints
+- suggested_next_actions
+
+Future research outputs should be stored back into the memory layer, not in an isolated research silo. Each output should preserve:
+
+- the ResearchQueueItem that requested it
+- the original source item or memory that motivated it
+- the generated research content
+- source proof or rationale
+- confidence or review status
+
+This keeps research explainable and makes research findings retrievable through the same source-backed memory system.
+
 ## Design Principles
 
 - Every memory should be explainable.
@@ -141,6 +187,8 @@ Fields:
 - The graph should tolerate uncertainty, merging, and correction.
 - Not all information should be treated equally.
 - The memory system should not become a giant junk drawer.
+- Research intent should not overload memory status.
+- Research outputs should compound memory instead of creating a parallel knowledge base.
 
 ## V1 Storage Shape
 
@@ -238,3 +286,15 @@ This is intentionally not a chat system, task system, dashboard, semantic search
 The current open-loops layer does not add a task table. It lists active `commitment` memories with source proof and confidence, then lets Ty mark a commitment `done` or `dismissed` by updating `memories.status`.
 
 This keeps open loops tied to source-backed memory instead of becoming task management.
+
+### research queue future shape
+
+ResearchQueueItem is documented for Phase 2.5 only. It is not part of the implemented v0 schema.
+
+Do not implement research agents, scheduled research, continuous research, or web crawling yet. The first useful version should only model the queue relationship:
+
+- a source item can create research requests
+- a memory can create research requests
+- a research request can later produce one or more source-backed memory outputs
+
+The memory layer remains the foundation.

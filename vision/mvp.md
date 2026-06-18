@@ -32,6 +32,8 @@ The product does not need to excel at:
 
 Those may become future applications of the memory layer.
 
+Research Queue is a future Phase 2.5 workflow, not part of the current MVP. It should allow memories or sources to be marked for later research without building autonomous agents, continuous research, scheduled research, or web crawling.
+
 ## V1 Jobs To Be Done
 
 - Capture a thought, note, link, document summary, task, event, or contact detail quickly.
@@ -78,6 +80,10 @@ Those may become future applications of the memory layer.
 - Full native mobile app
 - Complex dashboards
 - Proactive research
+- Research Queue implementation
+- Research agents
+- Scheduled research
+- Web crawling
 - Gift reminders
 - Resume updates
 - Skills graph
