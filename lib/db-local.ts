@@ -5,6 +5,7 @@ import type {
   CreateMemoryInput,
   CreateResearchQueueItemInput,
   CreateRecallFeedbackInput,
+  CreateYouTubeSourceInput,
   MemoriesBySourceId,
   Memory,
   MemoryDatabase,
@@ -16,7 +17,10 @@ import type {
   ResearchQueueItem,
   ResearchQueueItemWithContext,
   ResearchQueueStatus,
-  SourceItem
+  SourceItem,
+  YouTubeSource,
+  YouTubeSourcesBySourceId,
+  YouTubeTranscriptStatus
 } from "./db-types.ts";
 
 type SourceItemRow = {
@@ -84,6 +88,18 @@ type ResearchQueueItemWithContextRow = ResearchQueueItemRow & {
   memory_metadata_json: string | null;
   memory_status: MemoryStatus | null;
   memory_created_at: string | null;
+};
+
+type YouTubeSourceRow = {
+  id: number;
+  source_item_id: number;
+  url: string;
+  video_id: string;
+  title: string | null;
+  channel: string | null;
+  transcript_status: YouTubeTranscriptStatus;
+  summary: string | null;
+  created_at: string;
 };
 
 const dataDir = path.join(process.cwd(), "data");
@@ -156,11 +172,25 @@ function getDb() {
         FOREIGN KEY (memory_id) REFERENCES memories(id) ON DELETE SET NULL
       );
 
+      CREATE TABLE IF NOT EXISTS youtube_sources (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        source_item_id INTEGER NOT NULL UNIQUE,
+        url TEXT NOT NULL,
+        video_id TEXT NOT NULL,
+        title TEXT,
+        channel TEXT,
+        transcript_status TEXT NOT NULL DEFAULT 'unavailable' CHECK (transcript_status IN ('available', 'unavailable')),
+        summary TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (source_item_id) REFERENCES source_items(id) ON DELETE CASCADE
+      );
+
       CREATE INDEX IF NOT EXISTS idx_memories_source_item_id ON memories(source_item_id);
       CREATE INDEX IF NOT EXISTS idx_memories_kind ON memories(kind);
       CREATE INDEX IF NOT EXISTS idx_recall_feedback_source_item_id ON recall_feedback(source_item_id);
       CREATE INDEX IF NOT EXISTS idx_research_queue_items_source_item_id ON research_queue_items(source_item_id);
       CREATE INDEX IF NOT EXISTS idx_research_queue_items_memory_id ON research_queue_items(memory_id);
+      CREATE INDEX IF NOT EXISTS idx_youtube_sources_video_id ON youtube_sources(video_id);
     `);
 
     const memoryColumns = db.prepare("PRAGMA table_info(memories)").all() as Array<{ name: string }>;
@@ -294,6 +324,20 @@ function mapResearchQueueItemWithContext(row: ResearchQueueItemWithContextRow): 
   };
 }
 
+function mapYouTubeSource(row: YouTubeSourceRow): YouTubeSource {
+  return {
+    id: row.id,
+    sourceItemId: row.source_item_id,
+    url: row.url,
+    videoId: row.video_id,
+    title: row.title,
+    channel: row.channel,
+    transcriptStatus: row.transcript_status,
+    summary: row.summary,
+    createdAt: row.created_at
+  };
+}
+
 export function createSourceItem(content: string, sourceType = "text"): SourceItem {
   // Reject empty/whitespace-only input, but preserve the raw source verbatim.
   // Source-backed recall depends on byte-exact source, so we do not trim what we store.
@@ -327,6 +371,80 @@ export function listRecentSourceItems(limit = 20): SourceItem[] {
 export function countSourceItems(): number {
   const row = getDb().prepare("SELECT COUNT(*) as count FROM source_items").get() as { count: number };
   return row.count;
+}
+
+function validateYouTubeSourceInput(input: CreateYouTubeSourceInput) {
+  if (!Number.isInteger(input.sourceItemId) || input.sourceItemId < 1) {
+    throw new Error("YouTube source requires a valid source item.");
+  }
+
+  if (!input.url.trim()) {
+    throw new Error("YouTube source requires a URL.");
+  }
+
+  if (!/^[A-Za-z0-9_-]{11}$/.test(input.videoId)) {
+    throw new Error("YouTube source requires a valid video id.");
+  }
+
+  if (!["available", "unavailable"].includes(input.transcriptStatus)) {
+    throw new Error("YouTube transcript status must be available or unavailable.");
+  }
+}
+
+export function createYouTubeSource(input: CreateYouTubeSourceInput): YouTubeSource {
+  validateYouTubeSourceInput(input);
+  const createdAt = new Date().toISOString();
+  getDb()
+    .prepare(`
+      INSERT INTO youtube_sources (source_item_id, url, video_id, title, channel, transcript_status, summary, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(source_item_id) DO UPDATE SET
+        url = excluded.url,
+        video_id = excluded.video_id,
+        title = excluded.title,
+        channel = excluded.channel,
+        transcript_status = excluded.transcript_status,
+        summary = excluded.summary
+    `)
+    .run(
+      input.sourceItemId,
+      input.url,
+      input.videoId,
+      input.title ?? null,
+      input.channel ?? null,
+      input.transcriptStatus,
+      input.summary ?? null,
+      createdAt
+    );
+
+  const row = getDb()
+    .prepare(`
+      SELECT id, source_item_id, url, video_id, title, channel, transcript_status, summary, created_at
+      FROM youtube_sources
+      WHERE source_item_id = ?
+    `)
+    .get(input.sourceItemId) as YouTubeSourceRow;
+
+  return mapYouTubeSource(row);
+}
+
+export function listYouTubeSourcesForSources(sourceItemIds: number[]): YouTubeSourcesBySourceId {
+  const safeIds = [...new Set(sourceItemIds.filter((id) => Number.isInteger(id) && id > 0))];
+  if (safeIds.length === 0) {
+    return {};
+  }
+
+  const placeholders = safeIds.map(() => "?").join(", ");
+  const rows = getDb()
+    .prepare(`
+      SELECT id, source_item_id, url, video_id, title, channel, transcript_status, summary, created_at
+      FROM youtube_sources
+      WHERE source_item_id IN (${placeholders})
+      ORDER BY id DESC
+    `)
+    .all(...safeIds) as YouTubeSourceRow[];
+
+  return Object.fromEntries(rows.map((row) => [row.source_item_id, mapYouTubeSource(row)]));
 }
 
 function validateMemoryInput(input: CreateMemoryInput) {
@@ -738,6 +856,12 @@ export const localSqliteDatabase: MemoryDatabase = {
   },
   async countSourceItems() {
     return countSourceItems();
+  },
+  async createYouTubeSource(input) {
+    return createYouTubeSource(input);
+  },
+  async listYouTubeSourcesForSources(sourceItemIds) {
+    return listYouTubeSourcesForSources(sourceItemIds);
   },
   async createMemory(input) {
     return createMemory(input);

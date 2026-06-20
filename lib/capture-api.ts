@@ -1,6 +1,7 @@
 import { validateCaptureContent } from "./capture.ts";
-import { createSourceItem, type SourceItem } from "./db.ts";
+import { createSourceItem, createYouTubeSource, type SourceItem } from "./db.ts";
 import { extractAndStoreMemoriesForSource } from "./extraction.ts";
+import { buildYouTubeSourceInput, extractYouTubeReference } from "./youtube.ts";
 
 export type ScheduleAfterResponse = (task: () => Promise<void> | void) => void;
 
@@ -72,7 +73,11 @@ export async function handleCaptureApiRequest(request: Request, scheduleAfterRes
     return Response.json({ ok: false, error: validation.error }, { status: 400 });
   }
 
-  const source = await createSourceItem(text, "text");
+  const source = await createSourceItem(text, extractYouTubeReference(text) ? "youtube" : "text");
+  const youtubeSourceInput = await buildYouTubeSourceInput(source.id, text);
+  if (youtubeSourceInput) {
+    await createYouTubeSource(youtubeSourceInput);
+  }
   scheduleExtraction(source, scheduleAfterResponse);
 
   return Response.json(

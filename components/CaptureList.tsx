@@ -1,7 +1,8 @@
-import type { MemoriesBySourceId, Memory, SourceItem } from "@/lib/db";
+import type { MemoriesBySourceId, Memory, SourceItem, YouTubeSourcesBySourceId } from "@/lib/db";
 import { confidenceBadgeClass, getExtractionConfidence } from "@/lib/confidence";
 import { getMemoryReviewState } from "@/lib/memory-review";
 import { correctMemoryContent, deleteReviewedMemory, updateReviewedMemory } from "@/app/memories/actions";
+import { markResearchLater } from "@/app/research/actions";
 
 const dateFormatter = new Intl.DateTimeFormat("en", {
   dateStyle: "medium",
@@ -27,10 +28,12 @@ function getExplicitDateTexts(memory: Memory): string[] {
 export function CaptureList({
   items,
   memoriesBySource,
+  youtubeSourcesBySource = {},
   returnTo = "/inbox"
 }: {
   items: SourceItem[];
   memoriesBySource: MemoriesBySourceId;
+  youtubeSourcesBySource?: YouTubeSourcesBySourceId;
   returnTo?: "/capture" | "/inbox";
 }) {
   if (items.length === 0) {
@@ -41,6 +44,7 @@ export function CaptureList({
     <div className="inbox">
       {items.map((item) => {
         const memories = memoriesBySource[item.id] ?? [];
+        const youtubeSource = youtubeSourcesBySource[item.id];
 
         return (
           <article className="capture-item" key={item.id}>
@@ -50,6 +54,35 @@ export function CaptureList({
               <span>{dateFormatter.format(new Date(item.createdAt))}</span>
             </div>
             <p className="capture-content">{item.content}</p>
+
+            {youtubeSource ? (
+              <div className="youtube-source-card" aria-label={`YouTube source details for source ${item.id}`}>
+                <div className="capture-meta">
+                  <span className="badge">YouTube</span>
+                  <span className="badge badge-review">
+                    {youtubeSource.transcriptStatus === "available" ? "Transcript available" : "Transcript unavailable"}
+                  </span>
+                  <span>Video ID {youtubeSource.videoId}</span>
+                </div>
+                <p className="memory-content">{youtubeSource.title ?? "Untitled YouTube video"}</p>
+                {youtubeSource.channel ? <p className="memory-rationale">Channel: {youtubeSource.channel}</p> : null}
+                <p className="memory-rationale">
+                  <a href={youtubeSource.url} rel="noreferrer" target="_blank">{youtubeSource.url}</a>
+                </p>
+                {youtubeSource.summary ? (
+                  <p className="capture-content">{youtubeSource.summary}</p>
+                ) : (
+                  <p className="memory-rationale">
+                    Transcript unavailable. Raw URL and Ty&apos;s captured notes are preserved as personal context.
+                  </p>
+                )}
+                <form action={markResearchLater} className="memory-review-form">
+                  <input name="sourceItemId" type="hidden" value={item.id} />
+                  <input name="returnTo" type="hidden" value={returnTo} />
+                  <button className="secondary-button" type="submit">Mark for Research Later</button>
+                </form>
+              </div>
+            ) : null}
 
             {memories.length > 0 ? (
               <div className="memory-list" aria-label={`Proposed memories for source ${item.id}`}>

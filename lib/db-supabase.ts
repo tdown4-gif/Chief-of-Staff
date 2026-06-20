@@ -3,6 +3,7 @@ import type {
   CreateMemoryInput,
   CreateResearchQueueItemInput,
   CreateRecallFeedbackInput,
+  CreateYouTubeSourceInput,
   MemoriesBySourceId,
   Memory,
   MemoryDatabase,
@@ -14,7 +15,10 @@ import type {
   ResearchQueueItem,
   ResearchQueueItemWithContext,
   ResearchQueueStatus,
-  SourceItem
+  SourceItem,
+  YouTubeSource,
+  YouTubeSourcesBySourceId,
+  YouTubeTranscriptStatus
 } from "./db-types.ts";
 
 type SourceItemRow = {
@@ -66,6 +70,18 @@ type SupabaseMemoryInsert = {
   rationale: string;
   metadata_json: unknown;
   status: MemoryStatus;
+  created_at: string;
+};
+
+type YouTubeSourceRow = {
+  id: number | string;
+  source_item_id: number | string;
+  url: string;
+  video_id: string;
+  title: string | null;
+  channel: string | null;
+  transcript_status: YouTubeTranscriptStatus;
+  summary: string | null;
   created_at: string;
 };
 
@@ -172,6 +188,20 @@ function mapResearchQueueItem(row: ResearchQueueItemRow): ResearchQueueItem {
   };
 }
 
+function mapYouTubeSource(row: YouTubeSourceRow): YouTubeSource {
+  return {
+    id: asNumber(row.id),
+    sourceItemId: asNumber(row.source_item_id),
+    url: String(row.url),
+    videoId: String(row.video_id),
+    title: row.title,
+    channel: row.channel,
+    transcriptStatus: row.transcript_status,
+    summary: row.summary,
+    createdAt: String(row.created_at)
+  };
+}
+
 function throwIfError(error: { message: string } | null) {
   if (error) {
     throw new Error(error.message);
@@ -220,6 +250,24 @@ function validateResearchQueueItemInput(input: CreateResearchQueueItemInput) {
 
   if (memoryId != null && (!Number.isInteger(memoryId) || memoryId < 1)) {
     throw new Error("Research queue item requires a valid memory.");
+  }
+}
+
+function validateYouTubeSourceInput(input: CreateYouTubeSourceInput) {
+  if (!Number.isInteger(input.sourceItemId) || input.sourceItemId < 1) {
+    throw new Error("YouTube source requires a valid source item.");
+  }
+
+  if (!input.url.trim()) {
+    throw new Error("YouTube source requires a URL.");
+  }
+
+  if (!/^[A-Za-z0-9_-]{11}$/.test(input.videoId)) {
+    throw new Error("YouTube source requires a valid video id.");
+  }
+
+  if (!["available", "unavailable"].includes(input.transcriptStatus)) {
+    throw new Error("YouTube transcript status must be available or unavailable.");
   }
 }
 
@@ -455,6 +503,49 @@ export const supabaseDatabase: MemoryDatabase = {
     throwIfError(error);
 
     return (data ?? []).map((row) => mapMemoryWithSource(row as unknown as MemoryWithSourceRow));
+  },
+
+  async createYouTubeSource(input) {
+    validateYouTubeSourceInput(input);
+    const createdAt = new Date().toISOString();
+    const { data, error } = await getClient()
+      .from("youtube_sources")
+      .upsert({
+        source_item_id: input.sourceItemId,
+        url: input.url,
+        video_id: input.videoId,
+        title: input.title ?? null,
+        channel: input.channel ?? null,
+        transcript_status: input.transcriptStatus,
+        summary: input.summary ?? null,
+        created_at: createdAt
+      }, { onConflict: "source_item_id" })
+      .select("id, source_item_id, url, video_id, title, channel, transcript_status, summary, created_at")
+      .single();
+    throwIfError(error);
+
+    return mapYouTubeSource(data as YouTubeSourceRow);
+  },
+
+  async listYouTubeSourcesForSources(sourceItemIds) {
+    const safeIds = [...new Set(sourceItemIds.filter((id) => Number.isInteger(id) && id > 0))];
+    if (safeIds.length === 0) {
+      return {};
+    }
+
+    const { data, error } = await getClient()
+      .from("youtube_sources")
+      .select("id, source_item_id, url, video_id, title, channel, transcript_status, summary, created_at")
+      .in("source_item_id", safeIds)
+      .order("id", { ascending: false });
+    throwIfError(error);
+
+    return Object.fromEntries(
+      (data ?? []).map((row) => {
+        const youtubeSource = mapYouTubeSource(row as YouTubeSourceRow);
+        return [youtubeSource.sourceItemId, youtubeSource];
+      })
+    ) as YouTubeSourcesBySourceId;
   },
 
   async createResearchQueueItem(input) {

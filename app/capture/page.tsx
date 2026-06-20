@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CaptureForm } from "@/components/CaptureForm";
 import { CaptureList } from "@/components/CaptureList";
-import { listMemoriesForSources, listRecentSourceItems } from "@/lib/db";
+import { listMemoriesForSources, listRecentSourceItems, listYouTubeSourcesForSources } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,11 @@ type CapturePageProps = {
 export default async function CapturePage({ searchParams }: CapturePageProps) {
   const params = await searchParams;
   const recentCaptures = await listRecentSourceItems(5);
-  const memoriesBySource = await listMemoriesForSources(recentCaptures.map((item) => item.id));
+  const sourceIds = recentCaptures.map((item) => item.id);
+  const [memoriesBySource, youtubeSourcesBySource] = await Promise.all([
+    listMemoriesForSources(sourceIds),
+    listYouTubeSourcesForSources(sourceIds)
+  ]);
   const error = params.error === "too-long"
     ? "That capture is unusually large. Keep it under 100,000 characters."
     : params.error === "empty"
@@ -38,7 +42,12 @@ export default async function CapturePage({ searchParams }: CapturePageProps) {
       <section className="daily-section" aria-label="Recent captures">
         <h2>Recent captures</h2>
         {params.memoryUpdated ? <p className="hint">Memory review saved.</p> : null}
-        <CaptureList items={recentCaptures} memoriesBySource={memoriesBySource} returnTo="/capture" />
+        <CaptureList
+          items={recentCaptures}
+          memoriesBySource={memoriesBySource}
+          youtubeSourcesBySource={youtubeSourcesBySource}
+          returnTo="/capture"
+        />
       </section>
     </main>
   );

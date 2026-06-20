@@ -9,6 +9,7 @@ export type MemoryKind = "person" | "project" | "idea" | "commitment";
 export type MemoryStatus = "active" | "needs_review" | "done" | "dismissed";
 export type RecallFeedbackAction = "not_relevant" | "promote_to_memory" | "add_context";
 export type ResearchQueueStatus = "queued" | "done" | "dismissed";
+export type YouTubeTranscriptStatus = "available" | "unavailable";
 
 export type Memory = {
   id: number;
@@ -53,6 +54,30 @@ export type ResearchQueueItemWithContext = {
   memory: Memory | null;
 };
 
+export type YouTubeSource = {
+  id: number;
+  sourceItemId: number;
+  url: string;
+  videoId: string;
+  title: string | null;
+  channel: string | null;
+  transcriptStatus: YouTubeTranscriptStatus;
+  summary: string | null;
+  createdAt: string;
+};
+
+export type YouTubeSourcesBySourceId = Record<number, YouTubeSource>;
+
+export type CreateYouTubeSourceInput = {
+  sourceItemId: number;
+  url: string;
+  videoId: string;
+  title?: string | null;
+  channel?: string | null;
+  transcriptStatus: YouTubeTranscriptStatus;
+  summary?: string | null;
+};
+
 export type CreateResearchQueueItemInput = {
   sourceItemId?: number | null;
   memoryId?: number | null;
@@ -80,6 +105,8 @@ export type MemoryDatabase = {
   createSourceItem(content: string, sourceType?: string): Promise<SourceItem>;
   listRecentSourceItems(limit?: number): Promise<SourceItem[]>;
   countSourceItems(): Promise<number>;
+  createYouTubeSource(input: CreateYouTubeSourceInput): Promise<YouTubeSource>;
+  listYouTubeSourcesForSources(sourceItemIds: number[]): Promise<YouTubeSourcesBySourceId>;
   createMemory(input: CreateMemoryInput): Promise<Memory>;
   createMemories(inputs: CreateMemoryInput[]): Promise<Memory[]>;
   listMemoriesForSource(sourceItemId: number): Promise<Memory[]>;

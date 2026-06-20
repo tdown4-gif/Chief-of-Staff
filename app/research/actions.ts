@@ -19,11 +19,15 @@ function readOptionalPositiveInteger(formData: FormData, key: string): number | 
 }
 
 export async function markResearchLater(formData: FormData): Promise<void> {
+  const returnTo = formData.get("returnTo");
+  const redirectPath = returnTo === "/capture" || returnTo === "/inbox" ? returnTo : "/";
+
   await createResearchQueueItem({
     sourceItemId: readOptionalPositiveInteger(formData, "sourceItemId"),
     memoryId: readOptionalPositiveInteger(formData, "memoryId")
   });
 
   revalidatePath("/");
-  redirect("/?researchQueued=1");
+  revalidatePath(redirectPath);
+  redirect(`${redirectPath}?researchQueued=1`);
 }

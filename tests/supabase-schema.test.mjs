@@ -9,6 +9,7 @@ test("Supabase schema preserves the memory tables with Postgres-native types", (
   assert.match(schema, /create table if not exists public\.memories/i);
   assert.match(schema, /create table if not exists public\.recall_feedback/i);
   assert.match(schema, /create table if not exists public\.research_queue_items/i);
+  assert.match(schema, /create table if not exists public\.youtube_sources/i);
   assert.match(schema, /metadata_json jsonb/i);
   assert.match(schema, /created_at timestamptz/i);
 });
@@ -18,5 +19,7 @@ test("Supabase schema constrains memory kinds statuses and feedback actions", ()
   assert.match(schema, /status in \('active', 'needs_review', 'done', 'dismissed'\)/i);
   assert.match(schema, /action in \('not_relevant', 'promote_to_memory', 'add_context'\)/i);
   assert.match(schema, /status in \('queued', 'done', 'dismissed'\)/i);
+  assert.match(schema, /transcript_status in \('available', 'unavailable'\)/i);
   assert.match(schema, /alter table public\.research_queue_items enable row level security/i);
+  assert.match(schema, /alter table public\.youtube_sources enable row level security/i);
 });

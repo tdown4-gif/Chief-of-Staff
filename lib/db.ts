@@ -5,6 +5,7 @@ import type {
   CreateMemoryInput,
   CreateResearchQueueItemInput,
   CreateRecallFeedbackInput,
+  CreateYouTubeSourceInput,
   MemoryDatabase,
   MemoryStatus
 } from "./db-types.ts";
@@ -24,7 +25,10 @@ export type {
   ResearchQueueItem,
   ResearchQueueItemWithContext,
   ResearchQueueStatus,
-  SourceItem
+  SourceItem,
+  YouTubeSource,
+  YouTubeSourcesBySourceId,
+  YouTubeTranscriptStatus
 } from "./db-types.ts";
 
 function getDatabase(): MemoryDatabase {
@@ -59,6 +63,12 @@ export const listRecentSourceItems = (...args: Parameters<MemoryDatabase["listRe
 
 export const countSourceItems = (...args: Parameters<MemoryDatabase["countSourceItems"]>) =>
   getDatabase().countSourceItems(...args);
+
+export const createYouTubeSource = (input: CreateYouTubeSourceInput) =>
+  getDatabase().createYouTubeSource(input);
+
+export const listYouTubeSourcesForSources = (...args: Parameters<MemoryDatabase["listYouTubeSourcesForSources"]>) =>
+  getDatabase().listYouTubeSourcesForSources(...args);
 
 export const createMemory = (input: CreateMemoryInput) => getDatabase().createMemory(input);
 

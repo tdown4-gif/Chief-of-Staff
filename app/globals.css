@@ -708,6 +708,22 @@ p {
   background: var(--surface-soft);
 }
 
+.youtube-source-card {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+}
+
+.youtube-source-card a {
+  color: var(--accent);
+  overflow-wrap: anywhere;
+  font-weight: 760;
+}
+
 .open-loop-actions {
   display: flex;
   flex-wrap: wrap;

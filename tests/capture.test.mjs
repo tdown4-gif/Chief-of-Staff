@@ -33,7 +33,7 @@ test("long text captures are accepted by v0 validation", async () => {
 test("capture source types are constrained to a small v0 set", async () => {
   const { normalizeCaptureSourceType, SOURCE_TYPES } = await import("../lib/capture.ts");
 
-  assert.deepEqual(SOURCE_TYPES, ["text", "note", "link", "document", "contact"]);
+  assert.deepEqual(SOURCE_TYPES, ["text", "note", "link", "document", "contact", "youtube"]);
   assert.equal(normalizeCaptureSourceType("link"), "link");
   assert.equal(normalizeCaptureSourceType("document"), "document");
   assert.equal(normalizeCaptureSourceType(null), "text");

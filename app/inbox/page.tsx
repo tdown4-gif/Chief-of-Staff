@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { CaptureList } from "@/components/CaptureList";
-import { countSourceItems, listMemoriesForSources, listRecentSourceItems } from "@/lib/db";
+import { countSourceItems, listMemoriesForSources, listRecentSourceItems, listYouTubeSourcesForSources } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function InboxPage({ searchParams }: { searchParams: Promise<{ captured?: string; memoryUpdated?: string }> }) {
   const params = await searchParams;
   const items = await listRecentSourceItems(30);
-  const [memoriesBySource, total] = await Promise.all([
-    listMemoriesForSources(items.map((item) => item.id)),
+  const sourceIds = items.map((item) => item.id);
+  const [memoriesBySource, youtubeSourcesBySource, total] = await Promise.all([
+    listMemoriesForSources(sourceIds),
+    listYouTubeSourcesForSources(sourceIds),
     countSourceItems()
   ]);
 
@@ -34,7 +36,11 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
       </section>
 
       <section style={{ marginTop: 28 }} aria-label="Inbox captures">
-        <CaptureList items={items} memoriesBySource={memoriesBySource} />
+        <CaptureList
+          items={items}
+          memoriesBySource={memoriesBySource}
+          youtubeSourcesBySource={youtubeSourcesBySource}
+        />
       </section>
     </main>
   );

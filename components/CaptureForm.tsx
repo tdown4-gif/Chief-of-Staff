@@ -6,7 +6,8 @@ const sourceTypeLabels: Record<(typeof SOURCE_TYPES)[number], string> = {
   note: "Note",
   link: "Link",
   document: "Document",
-  contact: "Contact"
+  contact: "Contact",
+  youtube: "YouTube"
 };
 
 export function CaptureForm({ error, captured }: { error?: string; captured?: boolean }) {
