@@ -87,7 +87,12 @@ test("youtube context can be explicit or extracted from why-I-saved-this text", 
   );
 
   const inferred = await buildYouTubeSourceInput(8, rawCapture, fetchImpl);
-  const explicit = await buildYouTubeSourceInput(9, rawCapture, fetchImpl, "Tie this to the distribution strategy idea.");
+  const explicit = await buildYouTubeSourceInput(
+    9,
+    rawCapture,
+    fetchImpl,
+    "Why I saved this: Tie this to the distribution strategy idea."
+  );
 
   assert.equal(inferred.tyNote, "Useful example of how creator-led distribution creates durable recall.");
   assert.equal(explicit.tyNote, "Tie this to the distribution strategy idea.");

@@ -69,6 +69,14 @@ export function extractYouTubeContext(content: string): string | null {
   return value || null;
 }
 
+function normalizeYouTubeContext(content: string | null | undefined): string | null {
+  if (!content?.trim()) {
+    return null;
+  }
+
+  return extractYouTubeContext(content) ?? content.trim().replace(/\s+/g, " ");
+}
+
 async function fetchYouTubeOEmbed(url: string, fetchImpl: typeof fetch): Promise<YouTubeOEmbedResponse | null> {
   const endpoint = new URL("https://www.youtube.com/oembed");
   endpoint.searchParams.set("url", url);
@@ -98,7 +106,7 @@ export async function buildYouTubeSourceInput(
   const channel = typeof metadata?.author_name === "string" && metadata.author_name.trim()
     ? metadata.author_name.trim()
     : null;
-  const normalizedTyNote = tyNote?.trim().replace(/\s+/g, " ") || extractYouTubeContext(contentOrUrl);
+  const normalizedTyNote = normalizeYouTubeContext(tyNote) ?? extractYouTubeContext(contentOrUrl);
 
   return {
     sourceItemId,
