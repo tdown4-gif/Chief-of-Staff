@@ -1,16 +1,20 @@
 import {
   listMemoriesForSources,
   listRecentSourceItems,
+  listYouTubeSourcesForSources,
   type MemoriesBySourceId,
   type Memory,
   type MemoryKind,
   type MemoryStatus,
-  type SourceItem
+  type SourceItem,
+  type YouTubeSource,
+  type YouTubeSourcesBySourceId
 } from "./db.ts";
 
 export type RecallResult = {
   source: SourceItem;
   memory: Memory | null;
+  youtubeSource: YouTubeSource | null;
   sourceSnippet: string;
   score: number;
   resultType: "memory" | "needs_review" | "raw" | "raw_fallback";
@@ -19,6 +23,7 @@ export type RecallResult = {
 export type RecallDependencies = {
   listRecentSourceItems: (limit?: number) => Promise<SourceItem[]> | SourceItem[];
   listMemoriesForSources: (sourceItemIds: number[]) => Promise<MemoriesBySourceId> | MemoriesBySourceId;
+  listYouTubeSourcesForSources?: (sourceItemIds: number[]) => Promise<YouTubeSourcesBySourceId> | YouTubeSourcesBySourceId;
 };
 
 export type RecallOptions = {
@@ -30,7 +35,8 @@ export type RecallOptions = {
 
 const defaultRecallDependencies: RecallDependencies = {
   listRecentSourceItems,
-  listMemoriesForSources
+  listMemoriesForSources,
+  listYouTubeSourcesForSources
 };
 
 const RECALL_SOURCE_WINDOW = 1000;
@@ -150,6 +156,39 @@ function countSourceMatches(source: SourceItem, queryTokens: string[]): number {
   return countMatches(`${source.sourceType} ${source.content}`, queryTokens);
 }
 
+function buildYouTubeSearchText(youtubeSource: YouTubeSource | null): string {
+  if (!youtubeSource) {
+    return "";
+  }
+
+  return [
+    "youtube",
+    youtubeSource.url,
+    youtubeSource.videoId,
+    youtubeSource.title,
+    youtubeSource.channel,
+    youtubeSource.tyNote,
+    youtubeSource.transcriptStatus
+  ].filter(Boolean).join(" ");
+}
+
+function buildYouTubeSnippet(source: SourceItem, youtubeSource: YouTubeSource | null, queryTokens: string[]): string {
+  if (!youtubeSource) {
+    return buildSourceSnippet(source.content, queryTokens);
+  }
+
+  return buildSourceSnippet(
+    [
+      youtubeSource.title ? `Video: ${youtubeSource.title}` : null,
+      youtubeSource.channel ? `Channel: ${youtubeSource.channel}` : null,
+      `URL: ${youtubeSource.url}`,
+      youtubeSource.tyNote ? `Why I saved this: ${youtubeSource.tyNote}` : null,
+      `Source proof: ${source.content}`
+    ].filter(Boolean).join(" | "),
+    queryTokens
+  );
+}
+
 const GENERIC_RECALL_TOKENS = new Set([
   "ai",
   "business",
@@ -228,7 +267,11 @@ export async function recall(
   const normalizedOptions = normalizeOptions(inferredKinds ? { ...options, kinds: inferredKinds } : options);
   const requiredQueryTokens = selectRequiredQueryTokens(queryTokens);
   const sources = await dependencies.listRecentSourceItems(RECALL_SOURCE_WINDOW);
-  const memoriesBySource = await dependencies.listMemoriesForSources(sources.map((source) => source.id));
+  const sourceIds = sources.map((source) => source.id);
+  const [memoriesBySource, youtubeSourcesBySource] = await Promise.all([
+    dependencies.listMemoriesForSources(sourceIds),
+    (dependencies.listYouTubeSourcesForSources ?? listYouTubeSourcesForSources)(sourceIds)
+  ]);
   const rawFallbackResults: RecallResult[] = [];
   const results = sources.flatMap<RecallResult>((source) => {
     if (normalizedOptions.sourceTypes.length > 0 && !normalizedOptions.sourceTypes.includes(source.sourceType)) {
@@ -236,7 +279,9 @@ export async function recall(
     }
 
     const memories = memoriesBySource[source.id] ?? [];
-    const sourceScore = countSourceMatches(source, queryTokens);
+    const youtubeSource = youtubeSourcesBySource[source.id] ?? null;
+    const youtubeSearchText = buildYouTubeSearchText(youtubeSource);
+    const sourceScore = countSourceMatches(source, queryTokens) + countMatches(youtubeSearchText, queryTokens);
     let filteredOutMemoryMatched = false;
     const memoryResults = memories.flatMap<RecallResult>((memory) => {
       const memoryText = `${memory.kind} ${memory.content} ${memory.rationale}`;
@@ -258,7 +303,10 @@ export async function recall(
             {
               source,
               memory,
-              sourceSnippet: buildSourceSnippet(source.content, [...queryTokens, ...tokenize(memory.content)]),
+              youtubeSource,
+              sourceSnippet: youtubeSource
+                ? buildYouTubeSnippet(source, youtubeSource, [...queryTokens, ...tokenize(memory.content)])
+                : buildSourceSnippet(source.content, [...queryTokens, ...tokenize(memory.content)]),
               score,
               resultType: memoryResultType(memory)
             }
@@ -273,7 +321,10 @@ export async function recall(
     const rawMatches =
       !filteredOutMemoryMatched &&
       sourceScore > 0 &&
-      (requiredQueryTokens.length === 0 || countSourceMatches(source, requiredQueryTokens) > 0);
+      (
+        requiredQueryTokens.length === 0 ||
+        countSourceMatches(source, requiredQueryTokens) + countMatches(youtubeSearchText, requiredQueryTokens) > 0
+      );
 
     if (!rawMatches) {
       return [];
@@ -282,7 +333,8 @@ export async function recall(
     const rawResult: RecallResult = {
       source,
       memory: null,
-      sourceSnippet: buildSourceSnippet(source.content, queryTokens),
+      youtubeSource,
+      sourceSnippet: buildYouTubeSnippet(source, youtubeSource, queryTokens),
       score: sourceScore,
       resultType: normalizedOptions.includeRawSources ? "raw" : "raw_fallback"
     };

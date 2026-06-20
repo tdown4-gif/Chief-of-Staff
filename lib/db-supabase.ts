@@ -80,6 +80,7 @@ type YouTubeSourceRow = {
   video_id: string;
   title: string | null;
   channel: string | null;
+  ty_note: string | null;
   transcript_status: YouTubeTranscriptStatus;
   summary: string | null;
   created_at: string;
@@ -196,6 +197,7 @@ function mapYouTubeSource(row: YouTubeSourceRow): YouTubeSource {
     videoId: String(row.video_id),
     title: row.title,
     channel: row.channel,
+    tyNote: row.ty_note,
     transcriptStatus: row.transcript_status,
     summary: row.summary,
     createdAt: String(row.created_at)
@@ -516,11 +518,12 @@ export const supabaseDatabase: MemoryDatabase = {
         video_id: input.videoId,
         title: input.title ?? null,
         channel: input.channel ?? null,
+        ty_note: input.tyNote ?? null,
         transcript_status: input.transcriptStatus,
         summary: input.summary ?? null,
         created_at: createdAt
       }, { onConflict: "source_item_id" })
-      .select("id, source_item_id, url, video_id, title, channel, transcript_status, summary, created_at")
+      .select("id, source_item_id, url, video_id, title, channel, ty_note, transcript_status, summary, created_at")
       .single();
     throwIfError(error);
 
@@ -535,7 +538,7 @@ export const supabaseDatabase: MemoryDatabase = {
 
     const { data, error } = await getClient()
       .from("youtube_sources")
-      .select("id, source_item_id, url, video_id, title, channel, transcript_status, summary, created_at")
+      .select("id, source_item_id, url, video_id, title, channel, ty_note, transcript_status, summary, created_at")
       .in("source_item_id", safeIds)
       .order("id", { ascending: false });
     throwIfError(error);
@@ -619,11 +622,25 @@ export const supabaseDatabase: MemoryDatabase = {
       return [source.id, source] as const;
     }));
 
+    const { data: youtubeRows, error: youtubeError } = sourceIds.length > 0
+      ? await getClient()
+        .from("youtube_sources")
+        .select("id, source_item_id, url, video_id, title, channel, ty_note, transcript_status, summary, created_at")
+        .in("source_item_id", sourceIds)
+      : { data: [], error: null };
+    throwIfError(youtubeError);
+
+    const youtubeSourcesBySourceId = new Map((youtubeRows ?? []).map((row) => {
+      const youtubeSource = mapYouTubeSource(row as YouTubeSourceRow);
+      return [youtubeSource.sourceItemId, youtubeSource] as const;
+    }));
+
     return queueItems.flatMap((researchQueueItem): ResearchQueueItemWithContext[] => {
       const memory = researchQueueItem.memoryId ? memoriesById.get(researchQueueItem.memoryId) ?? null : null;
       const sourceId = researchQueueItem.sourceItemId ?? memory?.sourceItemId ?? null;
       const source = sourceId ? sourcesById.get(sourceId) : null;
-      return source ? [{ researchQueueItem, source, memory }] : [];
+      const youtubeSource = sourceId ? youtubeSourcesBySourceId.get(sourceId) ?? null : null;
+      return source ? [{ researchQueueItem, source, memory, youtubeSource }] : [];
     });
   },
 

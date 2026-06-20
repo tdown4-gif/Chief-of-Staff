@@ -63,6 +63,12 @@ export function extractYouTubeReference(content: string): YouTubeReference | nul
   return null;
 }
 
+export function extractYouTubeContext(content: string): string | null {
+  const match = content.match(/(?:why i saved this|why saved|context|note)\s*:\s*([\s\S]+)/i);
+  const value = match?.[1]?.trim().replace(/\s+/g, " ");
+  return value || null;
+}
+
 async function fetchYouTubeOEmbed(url: string, fetchImpl: typeof fetch): Promise<YouTubeOEmbedResponse | null> {
   const endpoint = new URL("https://www.youtube.com/oembed");
   endpoint.searchParams.set("url", url);
@@ -79,7 +85,8 @@ async function fetchYouTubeOEmbed(url: string, fetchImpl: typeof fetch): Promise
 export async function buildYouTubeSourceInput(
   sourceItemId: number,
   contentOrUrl: string,
-  fetchImpl: typeof fetch = fetch
+  fetchImpl: typeof fetch = fetch,
+  tyNote?: string | null
 ): Promise<CreateYouTubeSourceInput | null> {
   const reference = extractYouTubeReference(contentOrUrl) ?? extractYouTubeReference(`https://www.youtube.com/watch?v=${contentOrUrl}`);
   if (!reference) {
@@ -91,6 +98,7 @@ export async function buildYouTubeSourceInput(
   const channel = typeof metadata?.author_name === "string" && metadata.author_name.trim()
     ? metadata.author_name.trim()
     : null;
+  const normalizedTyNote = tyNote?.trim().replace(/\s+/g, " ") || extractYouTubeContext(contentOrUrl);
 
   return {
     sourceItemId,
@@ -98,6 +106,7 @@ export async function buildYouTubeSourceInput(
     videoId: reference.videoId,
     title,
     channel,
+    tyNote: normalizedTyNote,
     transcriptStatus: "unavailable",
     summary: null
   };

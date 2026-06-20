@@ -52,6 +52,7 @@ export type ResearchQueueItemWithContext = {
   researchQueueItem: ResearchQueueItem;
   source: SourceItem;
   memory: Memory | null;
+  youtubeSource: YouTubeSource | null;
 };
 
 export type YouTubeSource = {
@@ -61,6 +62,7 @@ export type YouTubeSource = {
   videoId: string;
   title: string | null;
   channel: string | null;
+  tyNote: string | null;
   transcriptStatus: YouTubeTranscriptStatus;
   summary: string | null;
   createdAt: string;
@@ -74,6 +76,7 @@ export type CreateYouTubeSourceInput = {
   videoId: string;
   title?: string | null;
   channel?: string | null;
+  tyNote?: string | null;
   transcriptStatus: YouTubeTranscriptStatus;
   summary?: string | null;
 };

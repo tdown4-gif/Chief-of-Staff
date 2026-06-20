@@ -22,7 +22,13 @@ export async function saveCapture(formData: FormData): Promise<void> {
 
   const sourceType = extractYouTubeReference(content) ? "youtube" : normalizeCaptureSourceType(formData.get("sourceType"));
   const source = await createSourceItem(content, sourceType);
-  const youtubeSourceInput = await buildYouTubeSourceInput(source.id, content);
+  const youtubeContext = formData.get("youtubeContext");
+  const youtubeSourceInput = await buildYouTubeSourceInput(
+    source.id,
+    content,
+    fetch,
+    typeof youtubeContext === "string" ? youtubeContext : null
+  );
   if (youtubeSourceInput) {
     await createYouTubeSource(youtubeSourceInput);
   }

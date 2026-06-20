@@ -39,6 +39,17 @@ export function CaptureForm({ error, captured }: { error?: string; captured?: bo
         spellCheck
         placeholder="Type, paste, or dictate anything worth remembering..."
       />
+      <label className="context-field" htmlFor="youtubeContext">
+        <span>Why I saved this</span>
+        <textarea
+          id="youtubeContext"
+          name="youtubeContext"
+          className="context-textarea"
+          rows={3}
+          spellCheck
+          placeholder="Optional context for a YouTube link or idea..."
+        />
+      </label>
       <div className="capture-status" aria-live="polite">
         {captured ? <p className="success">Saved. Ready for the next thought.</p> : null}
         {error ? <p className="error">{error}</p> : null}

@@ -69,6 +69,12 @@ export function CaptureList({
                 <p className="memory-rationale">
                   <a href={youtubeSource.url} rel="noreferrer" target="_blank">{youtubeSource.url}</a>
                 </p>
+                {youtubeSource.tyNote ? (
+                  <div className="source-proof">
+                    <p className="memory-list-title">Why I saved this</p>
+                    <p className="capture-content">{youtubeSource.tyNote}</p>
+                  </div>
+                ) : null}
                 {youtubeSource.summary ? (
                   <p className="capture-content">{youtubeSource.summary}</p>
                 ) : (

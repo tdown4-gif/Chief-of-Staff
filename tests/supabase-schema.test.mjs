@@ -10,6 +10,7 @@ test("Supabase schema preserves the memory tables with Postgres-native types", (
   assert.match(schema, /create table if not exists public\.recall_feedback/i);
   assert.match(schema, /create table if not exists public\.research_queue_items/i);
   assert.match(schema, /create table if not exists public\.youtube_sources/i);
+  assert.match(schema, /ty_note text/i);
   assert.match(schema, /metadata_json jsonb/i);
   assert.match(schema, /created_at timestamptz/i);
 });

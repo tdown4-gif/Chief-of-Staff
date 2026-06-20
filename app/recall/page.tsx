@@ -78,6 +78,7 @@ export default async function RecallPage({ searchParams }: RecallPageProps) {
             <option value="text">Text</option>
             <option value="note">Notes</option>
             <option value="link">Links</option>
+            <option value="youtube">YouTube</option>
             <option value="document">Documents</option>
             <option value="contact">Contacts</option>
           </select>
@@ -136,6 +137,28 @@ export default async function RecallPage({ searchParams }: RecallPageProps) {
                     ) : (
                       <p className="memory-content">Raw source match</p>
                     )}
+                    {result.youtubeSource ? (
+                      <div className="youtube-source-card">
+                        <div className="capture-meta">
+                          <span className="badge">YouTube</span>
+                          <span className="badge badge-review">
+                            {result.youtubeSource.transcriptStatus === "available" ? "Transcript available" : "Transcript unavailable"}
+                          </span>
+                          <span>Video ID {result.youtubeSource.videoId}</span>
+                        </div>
+                        <p className="memory-content">{result.youtubeSource.title ?? "Untitled YouTube video"}</p>
+                        {result.youtubeSource.channel ? <p className="memory-rationale">Channel: {result.youtubeSource.channel}</p> : null}
+                        <p className="memory-rationale">
+                          <a href={result.youtubeSource.url} rel="noreferrer" target="_blank">{result.youtubeSource.url}</a>
+                        </p>
+                        {result.youtubeSource.tyNote ? (
+                          <div className="source-proof">
+                            <p className="memory-list-title">Why I saved this</p>
+                            <p className="capture-content">{result.youtubeSource.tyNote}</p>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                     <p className="memory-rationale">{recallConfidence.explanation}</p>
 
                     <div className="source-proof">

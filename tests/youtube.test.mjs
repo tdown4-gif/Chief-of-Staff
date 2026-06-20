@@ -67,9 +67,30 @@ test("youtube metadata fetch uses oembed when available and preserves transcript
   assert.equal(input.videoId, "dQw4w9WgXcQ");
   assert.equal(input.title, "AI Insurance Workflows");
   assert.equal(input.channel, "Palms AI");
+  assert.equal(input.tyNote, null);
   assert.equal(input.transcriptStatus, "unavailable");
   assert.equal(input.summary, null);
   assert.match(requests[0], /youtube\.com\/oembed/);
+});
+
+test("youtube context can be explicit or extracted from why-I-saved-this text", async () => {
+  const { buildYouTubeSourceInput, extractYouTubeContext } = await import("../lib/youtube.ts");
+  const fetchImpl = async () => ({ ok: false, json: async () => null });
+  const rawCapture = [
+    "https://youtu.be/dQw4w9WgXcQ",
+    "Why I saved this: Useful example of how creator-led distribution creates durable recall."
+  ].join("\n");
+
+  assert.equal(
+    extractYouTubeContext(rawCapture),
+    "Useful example of how creator-led distribution creates durable recall."
+  );
+
+  const inferred = await buildYouTubeSourceInput(8, rawCapture, fetchImpl);
+  const explicit = await buildYouTubeSourceInput(9, rawCapture, fetchImpl, "Tie this to the distribution strategy idea.");
+
+  assert.equal(inferred.tyNote, "Useful example of how creator-led distribution creates durable recall.");
+  assert.equal(explicit.tyNote, "Tie this to the distribution strategy idea.");
 });
 
 test("youtube sources persist metadata linked to exact raw capture", async () => {
@@ -82,6 +103,7 @@ test("youtube sources persist metadata linked to exact raw capture", async () =>
     videoId: "dQw4w9WgXcQ",
     title: "AI Insurance Workflows",
     channel: "Palms AI",
+    tyNote: "Use this as a benchmark for insurance workflow content.",
     transcriptStatus: "unavailable",
     summary: null
   });
@@ -93,5 +115,6 @@ test("youtube sources persist metadata linked to exact raw capture", async () =>
   assert.equal(bySource[source.id].id, youtubeSource.id);
   assert.equal(bySource[source.id].title, "AI Insurance Workflows");
   assert.equal(bySource[source.id].channel, "Palms AI");
+  assert.equal(bySource[source.id].tyNote, "Use this as a benchmark for insurance workflow content.");
   assert.equal(bySource[source.id].transcriptStatus, "unavailable");
 });

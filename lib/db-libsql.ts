@@ -86,6 +86,16 @@ type ResearchQueueItemWithContextRow = ResearchQueueItemRow & {
   memory_metadata_json: string | null;
   memory_status: MemoryStatus | null;
   memory_created_at: string | null;
+  youtube_id: number | null;
+  youtube_source_item_id: number | null;
+  youtube_url: string | null;
+  youtube_video_id: string | null;
+  youtube_title: string | null;
+  youtube_channel: string | null;
+  youtube_ty_note: string | null;
+  youtube_transcript_status: YouTubeTranscriptStatus | null;
+  youtube_summary: string | null;
+  youtube_created_at: string | null;
 };
 
 type YouTubeSourceRow = {
@@ -95,6 +105,7 @@ type YouTubeSourceRow = {
   video_id: string;
   title: string | null;
   channel: string | null;
+  ty_note: string | null;
   transcript_status: YouTubeTranscriptStatus;
   summary: string | null;
   created_at: string;
@@ -181,6 +192,7 @@ async function ensureSchema() {
       video_id TEXT NOT NULL,
       title TEXT,
       channel TEXT,
+      ty_note TEXT,
       transcript_status TEXT NOT NULL DEFAULT 'unavailable' CHECK (transcript_status IN ('available', 'unavailable')),
       summary TEXT,
       created_at TEXT NOT NULL,
@@ -200,6 +212,11 @@ async function ensureSchema() {
       ALTER TABLE memories
       ADD COLUMN status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'needs_review', 'done', 'dismissed'))
     `);
+  }
+
+  const youtubeColumns = await database.execute("PRAGMA table_info(youtube_sources)");
+  if (!youtubeColumns.rows.some((column) => column.name === "ty_note")) {
+    await database.execute("ALTER TABLE youtube_sources ADD COLUMN ty_note TEXT");
   }
 
   initialized = true;
@@ -298,6 +315,20 @@ function mapResearchQueueItemWithContext(row: ResearchQueueItemWithContextRow): 
         status: row.memory_status,
         created_at: row.memory_created_at
       })
+      : null,
+    youtubeSource: row.youtube_id && row.youtube_source_item_id && row.youtube_url && row.youtube_video_id && row.youtube_transcript_status && row.youtube_created_at
+      ? mapYouTubeSource({
+        id: row.youtube_id,
+        source_item_id: row.youtube_source_item_id,
+        url: row.youtube_url,
+        video_id: row.youtube_video_id,
+        title: row.youtube_title,
+        channel: row.youtube_channel,
+        ty_note: row.youtube_ty_note,
+        transcript_status: row.youtube_transcript_status,
+        summary: row.youtube_summary,
+        created_at: row.youtube_created_at
+      })
       : null
   };
 }
@@ -310,6 +341,7 @@ function mapYouTubeSource(row: YouTubeSourceRow): YouTubeSource {
     videoId: String(row.video_id),
     title: row.title,
     channel: row.channel,
+    tyNote: row.ty_note,
     transcriptStatus: row.transcript_status,
     summary: row.summary,
     createdAt: String(row.created_at)
@@ -702,13 +734,14 @@ export const libsqlDatabase: MemoryDatabase = {
     const createdAt = new Date().toISOString();
     await database.execute({
       sql: `
-        INSERT INTO youtube_sources (source_item_id, url, video_id, title, channel, transcript_status, summary, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO youtube_sources (source_item_id, url, video_id, title, channel, ty_note, transcript_status, summary, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(source_item_id) DO UPDATE SET
           url = excluded.url,
           video_id = excluded.video_id,
           title = excluded.title,
           channel = excluded.channel,
+          ty_note = excluded.ty_note,
           transcript_status = excluded.transcript_status,
           summary = excluded.summary
       `,
@@ -718,6 +751,7 @@ export const libsqlDatabase: MemoryDatabase = {
         input.videoId,
         input.title ?? null,
         input.channel ?? null,
+        input.tyNote ?? null,
         input.transcriptStatus,
         input.summary ?? null,
         createdAt
@@ -727,7 +761,7 @@ export const libsqlDatabase: MemoryDatabase = {
     const row = (
       await database.execute({
         sql: `
-          SELECT id, source_item_id, url, video_id, title, channel, transcript_status, summary, created_at
+          SELECT id, source_item_id, url, video_id, title, channel, ty_note, transcript_status, summary, created_at
           FROM youtube_sources
           WHERE source_item_id = ?
         `,
@@ -752,7 +786,7 @@ export const libsqlDatabase: MemoryDatabase = {
     const database = await ensureSchema();
     const rows = await database.execute({
       sql: `
-        SELECT id, source_item_id, url, video_id, title, channel, transcript_status, summary, created_at
+        SELECT id, source_item_id, url, video_id, title, channel, ty_note, transcript_status, summary, created_at
         FROM youtube_sources
         WHERE source_item_id IN (${placeholders})
         ORDER BY id DESC
@@ -810,10 +844,21 @@ export const libsqlDatabase: MemoryDatabase = {
           m.rationale AS memory_rationale,
           m.metadata_json AS memory_metadata_json,
           m.status AS memory_status,
-          m.created_at AS memory_created_at
+          m.created_at AS memory_created_at,
+          y.id AS youtube_id,
+          y.source_item_id AS youtube_source_item_id,
+          y.url AS youtube_url,
+          y.video_id AS youtube_video_id,
+          y.title AS youtube_title,
+          y.channel AS youtube_channel,
+          y.ty_note AS youtube_ty_note,
+          y.transcript_status AS youtube_transcript_status,
+          y.summary AS youtube_summary,
+          y.created_at AS youtube_created_at
         FROM research_queue_items r
         LEFT JOIN memories m ON m.id = r.memory_id
         JOIN source_items s ON s.id = COALESCE(r.source_item_id, m.source_item_id)
+        LEFT JOIN youtube_sources y ON y.source_item_id = s.id
         WHERE r.status = 'queued'
         ORDER BY datetime(r.created_at) DESC, r.id DESC
         LIMIT ?

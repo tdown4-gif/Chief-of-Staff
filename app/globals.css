@@ -298,10 +298,32 @@ p {
   text-transform: uppercase;
 }
 
+.context-field {
+  display: grid;
+  gap: 7px;
+  color: var(--muted-strong);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.context-textarea {
+  width: 100%;
+  min-height: 86px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: #fbfcfa;
+  color: var(--ink);
+  font-size: 0.96rem;
+  line-height: 1.45;
+}
+
 .capture-select,
 .recall-input,
 .recall-select,
-.memory-correction-input {
+.memory-correction-input,
+.context-textarea {
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -335,12 +357,14 @@ p {
 }
 
 .capture-textarea::placeholder,
+.context-textarea::placeholder,
 .recall-input::placeholder {
   color: #8a948c;
 }
 
 .capture-select:focus,
 .capture-textarea:focus,
+.context-textarea:focus,
 .recall-input:focus,
 .recall-select:focus,
 .memory-correction-input:focus {

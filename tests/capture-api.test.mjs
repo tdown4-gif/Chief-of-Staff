@@ -84,3 +84,22 @@ test("shortcut capture API accepts plain text bodies from Shortcuts", async () =
   assert.equal(response.status, 201);
   assert.equal((await dbModule.listRecentSourceItems(1))[0].content, "Idea: home screen dictation should save immediately.");
 });
+
+test("shortcut capture API stores YouTube context without changing raw capture text", async () => {
+  const route = await importWithTempDb("../lib/capture-api.ts");
+  const dbModule = await import(`../lib/db.ts?db=${Date.now()}-${Math.random()}`);
+  const text = "https://youtu.be/dQw4w9WgXcQ";
+
+  const response = await route.handleCaptureApiRequest(
+    request({ text, youtubeContext: "Use this as a reference for creator-led distribution." }),
+    () => {}
+  );
+  const json = await response.json();
+  const source = (await dbModule.listRecentSourceItems(1))[0];
+  const youtubeSourcesBySource = await dbModule.listYouTubeSourcesForSources([json.sourceId]);
+
+  assert.equal(response.status, 201);
+  assert.equal(source.content, text);
+  assert.equal(source.sourceType, "youtube");
+  assert.equal(youtubeSourcesBySource[json.sourceId].tyNote, "Use this as a reference for creator-led distribution.");
+});

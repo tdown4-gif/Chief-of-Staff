@@ -110,6 +110,31 @@ test("recall can filter results to requested source types", async () => {
   assert.equal(results[0].source.sourceType, "link");
 });
 
+test("recall searches YouTube title channel url and Ty context", async () => {
+  const dbModule = await importWithTempDb("../lib/db-local.ts");
+  const { recall } = await import("../lib/recall.ts");
+  const source = dbModule.createSourceItem("https://youtu.be/dQw4w9WgXcQ", "youtube");
+  dbModule.createYouTubeSource({
+    sourceItemId: source.id,
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    videoId: "dQw4w9WgXcQ",
+    title: "Creator distribution strategy breakdown",
+    channel: "Palms AI",
+    tyNote: "This matters for the personal context layer positioning.",
+    transcriptStatus: "unavailable",
+    summary: null
+  });
+
+  const results = await recall("personal context layer positioning", 10, undefined, { sourceTypes: ["youtube"] });
+
+  assert.equal(results.length, 1);
+  assert.equal(results[0].source.id, source.id);
+  assert.equal(results[0].source.sourceType, "youtube");
+  assert.equal(results[0].youtubeSource?.title, "Creator distribution strategy breakdown");
+  assert.equal(results[0].youtubeSource?.tyNote, "This matters for the personal context layer positioning.");
+  assert.match(results[0].sourceSnippet, /Why I saved this: This matters/);
+});
+
 test("recall handles plural memory-kind queries and centers source snippets on evidence", async () => {
   const dbModule = await importWithTempDb("../lib/db-local.ts");
   const { recall } = await import("../lib/recall.ts");

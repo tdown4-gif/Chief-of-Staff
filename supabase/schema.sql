@@ -43,6 +43,7 @@ create table if not exists public.youtube_sources (
   video_id text not null,
   title text,
   channel text,
+  ty_note text,
   transcript_status text not null default 'unavailable' check (transcript_status in ('available', 'unavailable')),
   summary text,
   created_at timestamptz not null default now()
