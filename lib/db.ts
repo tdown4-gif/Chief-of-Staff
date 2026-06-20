@@ -3,6 +3,7 @@ import { localSqliteDatabase } from "./db-local.ts";
 import { supabaseDatabase } from "./db-supabase.ts";
 import type {
   CreateMemoryInput,
+  CreateResearchQueueItemInput,
   CreateRecallFeedbackInput,
   MemoryDatabase,
   MemoryStatus
@@ -10,6 +11,7 @@ import type {
 
 export type {
   CreateMemoryInput,
+  CreateResearchQueueItemInput,
   CreateRecallFeedbackInput,
   MemoriesBySourceId,
   Memory,
@@ -19,6 +21,9 @@ export type {
   MemoryWithSource,
   RecallFeedback,
   RecallFeedbackAction,
+  ResearchQueueItem,
+  ResearchQueueItemWithContext,
+  ResearchQueueStatus,
   SourceItem
 } from "./db-types.ts";
 
@@ -81,8 +86,17 @@ export const updateCommitmentStatus = (memoryId: number, status: MemoryStatus) =
 export const listOpenCommitments = (...args: Parameters<MemoryDatabase["listOpenCommitments"]>) =>
   getDatabase().listOpenCommitments(...args);
 
+export const listRecentMemoriesByKind = (...args: Parameters<MemoryDatabase["listRecentMemoriesByKind"]>) =>
+  getDatabase().listRecentMemoriesByKind(...args);
+
 export const listMemoriesNeedingReview = (...args: Parameters<MemoryDatabase["listMemoriesNeedingReview"]>) =>
   getDatabase().listMemoriesNeedingReview(...args);
+
+export const createResearchQueueItem = (input: CreateResearchQueueItemInput) =>
+  getDatabase().createResearchQueueItem(input);
+
+export const listResearchQueueItems = (...args: Parameters<MemoryDatabase["listResearchQueueItems"]>) =>
+  getDatabase().listResearchQueueItems(...args);
 
 export const createRecallFeedback = (input: CreateRecallFeedbackInput) =>
   getDatabase().createRecallFeedback(input);

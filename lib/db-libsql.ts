@@ -1,6 +1,7 @@
 import { createClient, type Client } from "@libsql/client";
 import type {
   CreateMemoryInput,
+  CreateResearchQueueItemInput,
   CreateRecallFeedbackInput,
   MemoriesBySourceId,
   Memory,
@@ -10,6 +11,9 @@ import type {
   MemoryWithSource,
   RecallFeedback,
   RecallFeedbackAction,
+  ResearchQueueItem,
+  ResearchQueueItemWithContext,
+  ResearchQueueStatus,
   SourceItem
 } from "./db-types.ts";
 
@@ -56,6 +60,28 @@ type RecallFeedbackRow = {
   memory_id: number | null;
   note: string | null;
   created_at: string;
+};
+
+type ResearchQueueItemRow = {
+  id: number;
+  source_item_id: number | null;
+  memory_id: number | null;
+  status: ResearchQueueStatus;
+  created_at: string;
+};
+
+type ResearchQueueItemWithContextRow = ResearchQueueItemRow & {
+  source_id: number;
+  source_content: string;
+  source_type: string;
+  source_created_at: string;
+  memory_kind: MemoryKind | null;
+  memory_content: string | null;
+  memory_confidence: number | null;
+  memory_rationale: string | null;
+  memory_metadata_json: string | null;
+  memory_status: MemoryStatus | null;
+  memory_created_at: string | null;
 };
 
 const memoryStatuses = new Set<MemoryStatus>(["active", "needs_review", "done", "dismissed"]);
@@ -122,9 +148,21 @@ async function ensureSchema() {
       FOREIGN KEY (source_item_id) REFERENCES source_items(id) ON DELETE CASCADE,
       FOREIGN KEY (memory_id) REFERENCES memories(id) ON DELETE SET NULL
     )`,
+    `CREATE TABLE IF NOT EXISTS research_queue_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      source_item_id INTEGER,
+      memory_id INTEGER,
+      status TEXT NOT NULL DEFAULT 'queued' CHECK (status IN ('queued', 'done', 'dismissed')),
+      created_at TEXT NOT NULL,
+      CHECK (source_item_id IS NOT NULL OR memory_id IS NOT NULL),
+      FOREIGN KEY (source_item_id) REFERENCES source_items(id) ON DELETE CASCADE,
+      FOREIGN KEY (memory_id) REFERENCES memories(id) ON DELETE SET NULL
+    )`,
     "CREATE INDEX IF NOT EXISTS idx_memories_source_item_id ON memories(source_item_id)",
     "CREATE INDEX IF NOT EXISTS idx_memories_kind ON memories(kind)",
-    "CREATE INDEX IF NOT EXISTS idx_recall_feedback_source_item_id ON recall_feedback(source_item_id)"
+    "CREATE INDEX IF NOT EXISTS idx_recall_feedback_source_item_id ON recall_feedback(source_item_id)",
+    "CREATE INDEX IF NOT EXISTS idx_research_queue_items_source_item_id ON research_queue_items(source_item_id)",
+    "CREATE INDEX IF NOT EXISTS idx_research_queue_items_memory_id ON research_queue_items(memory_id)"
   ]);
 
   const memoryColumns = await database.execute("PRAGMA table_info(memories)");
@@ -200,6 +238,41 @@ function mapRecallFeedback(row: RecallFeedbackRow): RecallFeedback {
   };
 }
 
+function mapResearchQueueItem(row: ResearchQueueItemRow): ResearchQueueItem {
+  return {
+    id: asNumber(row.id),
+    sourceItemId: row.source_item_id == null ? null : asNumber(row.source_item_id),
+    memoryId: row.memory_id == null ? null : asNumber(row.memory_id),
+    status: row.status,
+    createdAt: String(row.created_at)
+  };
+}
+
+function mapResearchQueueItemWithContext(row: ResearchQueueItemWithContextRow): ResearchQueueItemWithContext {
+  return {
+    researchQueueItem: mapResearchQueueItem(row),
+    source: mapSourceItem({
+      id: row.source_id,
+      content: row.source_content,
+      source_type: row.source_type,
+      created_at: row.source_created_at
+    }),
+    memory: row.memory_id && row.memory_kind && row.memory_content && row.memory_confidence != null && row.memory_rationale && row.memory_status && row.memory_created_at
+      ? mapMemory({
+        id: row.memory_id,
+        source_item_id: row.source_item_id ?? row.source_id,
+        kind: row.memory_kind,
+        content: row.memory_content,
+        confidence: row.memory_confidence,
+        rationale: row.memory_rationale,
+        metadata_json: row.memory_metadata_json,
+        status: row.memory_status,
+        created_at: row.memory_created_at
+      })
+      : null
+  };
+}
+
 function validateMemoryInput(input: CreateMemoryInput) {
   if (!Number.isInteger(input.sourceItemId) || input.sourceItemId < 1) {
     throw new Error("Memory requires a valid source item.");
@@ -225,6 +298,23 @@ function validateMemoryInput(input: CreateMemoryInput) {
 function validateMemoryStatus(status: MemoryStatus) {
   if (!memoryStatuses.has(status)) {
     throw new Error("Memory status must be active, needs_review, done, or dismissed.");
+  }
+}
+
+function validateResearchQueueItemInput(input: CreateResearchQueueItemInput) {
+  const sourceItemId = input.sourceItemId ?? null;
+  const memoryId = input.memoryId ?? null;
+
+  if (sourceItemId == null && memoryId == null) {
+    throw new Error("Research queue item requires a source item or memory.");
+  }
+
+  if (sourceItemId != null && (!Number.isInteger(sourceItemId) || sourceItemId < 1)) {
+    throw new Error("Research queue item requires a valid source item.");
+  }
+
+  if (memoryId != null && (!Number.isInteger(memoryId) || memoryId < 1)) {
+    throw new Error("Research queue item requires a valid memory.");
   }
 }
 
@@ -483,6 +573,37 @@ export const libsqlDatabase: MemoryDatabase = {
     return rows.rows.map((row) => mapMemoryWithSource(row as unknown as MemoryWithSourceRow));
   },
 
+  async listRecentMemoriesByKind(kind, limit = 10) {
+    const safeLimit = Math.min(Math.max(limit, 1), 100);
+    const database = await ensureSchema();
+    const rows = await database.execute({
+      sql: `
+        SELECT
+          m.id AS memory_id,
+          m.source_item_id,
+          m.kind,
+          m.content AS memory_content,
+          m.confidence,
+          m.rationale,
+          m.metadata_json,
+          m.status,
+          m.created_at AS memory_created_at,
+          s.id AS source_id,
+          s.content AS source_content,
+          s.source_type,
+          s.created_at AS source_created_at
+        FROM memories m
+        JOIN source_items s ON s.id = m.source_item_id
+        WHERE m.kind = ? AND m.status = 'active'
+        ORDER BY datetime(m.created_at) DESC, m.id DESC
+        LIMIT ?
+      `,
+      args: [kind, safeLimit]
+    });
+
+    return rows.rows.map((row) => mapMemoryWithSource(row as unknown as MemoryWithSourceRow));
+  },
+
   async listMemoriesNeedingReview(limit = 10) {
     const safeLimit = Math.min(Math.max(limit, 1), 100);
     const database = await ensureSchema();
@@ -512,6 +633,62 @@ export const libsqlDatabase: MemoryDatabase = {
     });
 
     return rows.rows.map((row) => mapMemoryWithSource(row as unknown as MemoryWithSourceRow));
+  },
+
+  async createResearchQueueItem(input) {
+    validateResearchQueueItemInput(input);
+    const database = await ensureSchema();
+    const createdAt = new Date().toISOString();
+    const result = await database.execute({
+      sql: `
+        INSERT INTO research_queue_items (source_item_id, memory_id, status, created_at)
+        VALUES (?, ?, 'queued', ?)
+      `,
+      args: [input.sourceItemId ?? null, input.memoryId ?? null, createdAt]
+    });
+
+    return {
+      id: Number(result.lastInsertRowid),
+      sourceItemId: input.sourceItemId ?? null,
+      memoryId: input.memoryId ?? null,
+      status: "queued",
+      createdAt
+    };
+  },
+
+  async listResearchQueueItems(limit = 20) {
+    const safeLimit = Math.min(Math.max(limit, 1), 100);
+    const database = await ensureSchema();
+    const rows = await database.execute({
+      sql: `
+        SELECT
+          r.id,
+          r.source_item_id,
+          r.memory_id,
+          r.status,
+          r.created_at,
+          s.id AS source_id,
+          s.content AS source_content,
+          s.source_type,
+          s.created_at AS source_created_at,
+          m.kind AS memory_kind,
+          m.content AS memory_content,
+          m.confidence AS memory_confidence,
+          m.rationale AS memory_rationale,
+          m.metadata_json AS memory_metadata_json,
+          m.status AS memory_status,
+          m.created_at AS memory_created_at
+        FROM research_queue_items r
+        LEFT JOIN memories m ON m.id = r.memory_id
+        JOIN source_items s ON s.id = COALESCE(r.source_item_id, m.source_item_id)
+        WHERE r.status = 'queued'
+        ORDER BY datetime(r.created_at) DESC, r.id DESC
+        LIMIT ?
+      `,
+      args: [safeLimit]
+    });
+
+    return rows.rows.map((row) => mapResearchQueueItemWithContext(row as unknown as ResearchQueueItemWithContextRow));
   },
 
   async createRecallFeedback(input: CreateRecallFeedbackInput) {

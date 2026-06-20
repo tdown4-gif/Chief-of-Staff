@@ -8,6 +8,7 @@ export type SourceItem = {
 export type MemoryKind = "person" | "project" | "idea" | "commitment";
 export type MemoryStatus = "active" | "needs_review" | "done" | "dismissed";
 export type RecallFeedbackAction = "not_relevant" | "promote_to_memory" | "add_context";
+export type ResearchQueueStatus = "queued" | "done" | "dismissed";
 
 export type Memory = {
   id: number;
@@ -36,6 +37,25 @@ export type MemoriesBySourceId = Record<number, Memory[]>;
 export type MemoryWithSource = {
   memory: Memory;
   source: SourceItem;
+};
+
+export type ResearchQueueItem = {
+  id: number;
+  sourceItemId: number | null;
+  memoryId: number | null;
+  status: ResearchQueueStatus;
+  createdAt: string;
+};
+
+export type ResearchQueueItemWithContext = {
+  researchQueueItem: ResearchQueueItem;
+  source: SourceItem;
+  memory: Memory | null;
+};
+
+export type CreateResearchQueueItemInput = {
+  sourceItemId?: number | null;
+  memoryId?: number | null;
 };
 
 export type RecallFeedback = {
@@ -69,7 +89,10 @@ export type MemoryDatabase = {
   deleteMemory(memoryId: number): Promise<boolean>;
   updateCommitmentStatus(memoryId: number, status: MemoryStatus): Promise<Memory | null>;
   listOpenCommitments(limit?: number): Promise<MemoryWithSource[]>;
+  listRecentMemoriesByKind(kind: MemoryKind, limit?: number): Promise<MemoryWithSource[]>;
   listMemoriesNeedingReview(limit?: number): Promise<MemoryWithSource[]>;
+  createResearchQueueItem(input: CreateResearchQueueItemInput): Promise<ResearchQueueItem>;
+  listResearchQueueItems(limit?: number): Promise<ResearchQueueItemWithContext[]>;
   createRecallFeedback(input: CreateRecallFeedbackInput): Promise<RecallFeedback>;
   listRecallFeedback(limit?: number): Promise<RecallFeedback[]>;
 };

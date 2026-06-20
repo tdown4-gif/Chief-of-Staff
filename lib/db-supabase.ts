@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type {
   CreateMemoryInput,
+  CreateResearchQueueItemInput,
   CreateRecallFeedbackInput,
   MemoriesBySourceId,
   Memory,
@@ -10,6 +11,9 @@ import type {
   MemoryWithSource,
   RecallFeedback,
   RecallFeedbackAction,
+  ResearchQueueItem,
+  ResearchQueueItemWithContext,
+  ResearchQueueStatus,
   SourceItem
 } from "./db-types.ts";
 
@@ -43,6 +47,14 @@ type RecallFeedbackRow = {
   source_item_id: number | string;
   memory_id: number | string | null;
   note: string | null;
+  created_at: string;
+};
+
+type ResearchQueueItemRow = {
+  id: number | string;
+  source_item_id: number | string | null;
+  memory_id: number | string | null;
+  status: ResearchQueueStatus;
   created_at: string;
 };
 
@@ -150,6 +162,16 @@ function mapRecallFeedback(row: RecallFeedbackRow): RecallFeedback {
   };
 }
 
+function mapResearchQueueItem(row: ResearchQueueItemRow): ResearchQueueItem {
+  return {
+    id: asNumber(row.id),
+    sourceItemId: row.source_item_id == null ? null : asNumber(row.source_item_id),
+    memoryId: row.memory_id == null ? null : asNumber(row.memory_id),
+    status: row.status,
+    createdAt: String(row.created_at)
+  };
+}
+
 function throwIfError(error: { message: string } | null) {
   if (error) {
     throw new Error(error.message);
@@ -181,6 +203,23 @@ function validateMemoryInput(input: CreateMemoryInput) {
 function validateMemoryStatus(status: MemoryStatus) {
   if (!memoryStatuses.has(status)) {
     throw new Error("Memory status must be active, needs_review, done, or dismissed.");
+  }
+}
+
+function validateResearchQueueItemInput(input: CreateResearchQueueItemInput) {
+  const sourceItemId = input.sourceItemId ?? null;
+  const memoryId = input.memoryId ?? null;
+
+  if (sourceItemId == null && memoryId == null) {
+    throw new Error("Research queue item requires a source item or memory.");
+  }
+
+  if (sourceItemId != null && (!Number.isInteger(sourceItemId) || sourceItemId < 1)) {
+    throw new Error("Research queue item requires a valid source item.");
+  }
+
+  if (memoryId != null && (!Number.isInteger(memoryId) || memoryId < 1)) {
+    throw new Error("Research queue item requires a valid memory.");
   }
 }
 
@@ -387,6 +426,22 @@ export const supabaseDatabase: MemoryDatabase = {
     return (data ?? []).map((row) => mapMemoryWithSource(row as unknown as MemoryWithSourceRow));
   },
 
+  async listRecentMemoriesByKind(kind, limit = 10) {
+    const { data, error } = await getClient()
+      .from("memories")
+      .select(
+        "id, source_item_id, kind, content, confidence, rationale, metadata_json, status, created_at, source:source_items!inner(id, content, source_type, created_at)"
+      )
+      .eq("kind", kind)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(safeLimit(limit, 100));
+    throwIfError(error);
+
+    return (data ?? []).map((row) => mapMemoryWithSource(row as unknown as MemoryWithSourceRow));
+  },
+
   async listMemoriesNeedingReview(limit = 10) {
     const { data, error } = await getClient()
       .from("memories")
@@ -400,6 +455,85 @@ export const supabaseDatabase: MemoryDatabase = {
     throwIfError(error);
 
     return (data ?? []).map((row) => mapMemoryWithSource(row as unknown as MemoryWithSourceRow));
+  },
+
+  async createResearchQueueItem(input) {
+    validateResearchQueueItemInput(input);
+    const createdAt = new Date().toISOString();
+    const { data, error } = await getClient()
+      .from("research_queue_items")
+      .insert({
+        source_item_id: input.sourceItemId ?? null,
+        memory_id: input.memoryId ?? null,
+        status: "queued",
+        created_at: createdAt
+      })
+      .select("id, source_item_id, memory_id, status, created_at")
+      .single();
+    throwIfError(error);
+
+    return mapResearchQueueItem(data as ResearchQueueItemRow);
+  },
+
+  async listResearchQueueItems(limit = 20) {
+    const { data, error } = await getClient()
+      .from("research_queue_items")
+      .select("id, source_item_id, memory_id, status, created_at")
+      .eq("status", "queued")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(safeLimit(limit, 100));
+    throwIfError(error);
+
+    const queueItems = (data ?? []).map((row) => mapResearchQueueItem(row as ResearchQueueItemRow));
+    if (queueItems.length === 0) {
+      return [];
+    }
+
+    const memoryIds = [...new Set(queueItems.flatMap((item) => (item.memoryId ? [item.memoryId] : [])))];
+    const { data: memoryRows, error: memoriesError } = memoryIds.length > 0
+      ? await getClient()
+        .from("memories")
+        .select("id, source_item_id, kind, content, confidence, rationale, metadata_json, status, created_at")
+        .in("id", memoryIds)
+      : { data: [], error: null };
+    throwIfError(memoriesError);
+
+    const memoriesById = new Map((memoryRows ?? []).map((row) => {
+      const memory = mapMemory(row as MemoryRow);
+      return [memory.id, memory] as const;
+    }));
+
+    const sourceIds = [
+      ...new Set(
+        queueItems.flatMap((item) => {
+          if (item.sourceItemId) {
+            return [item.sourceItemId];
+          }
+          const memory = item.memoryId ? memoriesById.get(item.memoryId) : null;
+          return memory ? [memory.sourceItemId] : [];
+        })
+      )
+    ];
+    const { data: sourceRows, error: sourcesError } = sourceIds.length > 0
+      ? await getClient()
+        .from("source_items")
+        .select("id, content, source_type, created_at")
+        .in("id", sourceIds)
+      : { data: [], error: null };
+    throwIfError(sourcesError);
+
+    const sourcesById = new Map((sourceRows ?? []).map((row) => {
+      const source = mapSourceItem(row as SourceItemRow);
+      return [source.id, source] as const;
+    }));
+
+    return queueItems.flatMap((researchQueueItem): ResearchQueueItemWithContext[] => {
+      const memory = researchQueueItem.memoryId ? memoriesById.get(researchQueueItem.memoryId) ?? null : null;
+      const sourceId = researchQueueItem.sourceItemId ?? memory?.sourceItemId ?? null;
+      const source = sourceId ? sourcesById.get(sourceId) : null;
+      return source ? [{ researchQueueItem, source, memory }] : [];
+    });
   },
 
   async createRecallFeedback(input: CreateRecallFeedbackInput) {
